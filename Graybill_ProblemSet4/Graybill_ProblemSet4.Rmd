@@ -1,0 +1,221 @@
+---
+title: "Problem Set 4"
+author: "Aaron Graybill"
+output: pdf_document
+header-includes:
+  - \usepackage{amsmath}
+
+---
+
+For every single question, unless otherwise noted I collaborated with Blair Moore, Thomas Li, and
+John Cho.
+
+# Problem 1
+
+## 1.a
+
+```{r}
+df <- read.csv('firms.csv')
+
+y <- df[,'logsalespercap'] |> matrix(byrow = T)
+X <- cbind(`(Intercept)` = rep(1, nrow(df)),logemployment = df[,'logemployment'])
+
+solve(t(X)%*%X)%*%t(X)%*%y
+```
+
+## 1.b
+
+```{r}
+df <- read.csv('firms.csv')
+
+y <- df[,'logsalespercap'] |> matrix(byrow = T)
+
+firms <- unique(df$firm)
+indicator_mat <- outer(df$firm, firms, function(x,y){x == y})
+colnames(indicator_mat) <- paste0('firm_',firms)
+
+X <- cbind(logemployment = df[,'logemployment'], indicator_mat)
+
+(solve(t(X)%*%X)%*%t(X)%*%y)[1,]
+```
+
+## 1.c
+
+Since the fixed effect OLS produced a positive slope, that indicates that within-firm
+more employment is positively associated with sales. However the negative slope
+in the pooled regression indicates that the combination of between and within firm variation in employment
+is negatively related to sales. Noting that the firm-average regression removes all
+within firm variation, we can loosely conclude that since within is positive, within + between = negative
+then between = negative. This is a classic simpson's paradox. 
+
+# Problem 2
+
+## 2.a
+
+We define:
+
+$$
+\hat\beta_\lambda = \arg\min_{b\in \mathbb{R}}\sum_i(y_i-b)^2+\lambda b^2
+$$
+
+Which has $b$ derivative:
+
+$$
+\sum_i-2(y_i-b)+2\lambda b
+$$
+
+Setting equal to zero and solving, we have:
+
+$$
+\sum_i-2(y_i-b)+2\lambda b=0\implies b=\frac{\sum_iy_i}{(\lambda-n)}\implies b=\frac{n}{\lambda+n}\bar y
+$$
+
+So letting $\eta = 1-\frac{n}{\lambda + n}=\frac{\lambda}{\lambda+n}$, we can
+see that the penalized estimator is of the form $(1-\eta)\bar y$
+
+## 2.b
+
+We compute:
+
+$$
+\begin{aligned}
+E[\hat\beta]&=E\left[\frac{n}{\lambda+n}\bar y\right]\\
+&=\frac{n}{\lambda+n}E\left[\bar y\right]\\
+&=\frac{n}{\lambda+n}\beta\\
+&=\frac{n}{\lambda}\eta\beta\\
+&=\frac{1-\eta}{\eta}\eta\beta\\
+&=(1-\eta)\beta
+\end{aligned}
+$$
+
+Using the fact that $n$ and $\lambda$ are non-random, and then using the unbiasedness of the sample mean.
+
+The variance can be given by:
+
+$$
+\begin{aligned}
+E[\hat\beta^2]-E[\hat\beta]^2&=E\left[\left(\frac{n}{\lambda+n}\bar y\right)^2\right]-\left(\frac{n}{\lambda+n}\right)^2\beta^2\\
+&=\left(\frac{n}{\lambda+n}\right)^2 E\left[\bar y^2\right]-\left(\frac{n}{\lambda+n}\right)^2\beta^2\\
+&=\left(\frac{n}{\lambda+n}\right)^2 (V(\bar y)+E[\bar y]^2)-\left(\frac{n}{\lambda+n}\right)^2\beta^2\\
+&=\left(\frac{n}{\lambda+n}\right)^2 (V(\bar y)+\beta^2)-\left(\frac{n}{\lambda+n}\right)^2\beta^2\\
+&=\left(\frac{n}{\lambda+n}\right)^2 V(\bar y)\\
+&=\left(\frac{n}{\lambda+n}\right)^2 \frac{\sigma^2}{n}\\
+&=\left(1-\eta\right)^2 \frac{\sigma^2}{n}\\
+\end{aligned}
+$$
+
+Using the standard result on the variance of the sample mean.
+
+## 2.c
+
+To minimize bias, we'd need $1-\eta=1\implies \eta =0$. For a fixed $n$, this
+corresponds to a minimal payoff of $\lambda =0$. To minimize variance, we want $\eta =1$
+which corresponds to an infinite penalty.
+
+## 2.d
+
+An expression for the MSE is:
+
+$$
+\begin{aligned}
+E\left[\left(\hat\beta_\lambda-\beta\right)^2\right]&=E\left[\hat\beta_\lambda^2 -2\hat\beta_\lambda \beta + \beta^2 \right]\\
+&=E\left[\hat\beta_\lambda^2\right]-2\beta E\left[\hat\beta_\lambda\right]+\beta^2\\
+&=E\left[\hat\beta_\lambda^2\right]-2 (1-\eta)\beta^2+\beta^2\\
+&=E\left[(1-\eta)^2\bar y^2\right]-2 (1-\eta)\beta^2+\beta^2\\
+&=(1-\eta)^2E\left[\bar y^2\right]-2 (1-\eta)\beta^2+\beta^2\\
+&=(1-\eta)^2(V(\bar y)+E[\bar y]^2)-2 (1-\eta)\beta^2+\beta^2\\
+&=(1-\eta)^2(V(\bar y)+\beta^2)-2 (1-\eta)\beta^2+\beta^2\\
+&=(1-\eta)^2\left(\frac{\sigma^2}{n}+\beta^2\right)-2 (1-\eta)\beta^2+\beta^2\\
+\end{aligned}
+$$
+Which has $\eta$ derivative:
+
+$$
+-2(1-\eta)\left(\frac{\sigma^2}{n}+\beta^2\right)+2 \beta^2
+$$
+
+Solving the FOC yields:
+
+$$
+\boxed{
+\eta^*=\frac{\sigma^2}{\sigma^2 + n\beta^2}}
+$$
+
+But that expression is somewhat unsatisfying since $\eta$ itself is defined in terms of $n$
+solving for the implied $\lambda^*$, we get the even nicer $\lambda^* = \sigma^2/\beta^2$.
+
+## 2.e
+
+Since the family of normal distributions is closed under affine transformations,
+$y\sim \mathcal{N}(\beta,\sigma^2)$ is the same distribution as $b+\varepsilon$ where $\varepsilon\sim\mathcal{N}(0,\sigma^2)$. So express each of our $y_i$s in the form, we
+have that $y_i=\beta + \varepsilon_i$. The in-sample loss is then:
+
+$$
+\begin{aligned}
+\frac{1}{n}\sum_i(\beta + \varepsilon_i-\hat\beta_\lambda)^2&=\frac{1}{n}\sum_i(\beta + \varepsilon_i-(1-\eta)\overline y)^2\\
+&=\frac{1}{n}\sum_i(\beta + \varepsilon_i-(1-\eta)\frac{1}{n}\sum_j(\beta + \varepsilon_j))^2\\
+&=\frac{1}{n}\sum_i(\beta + \varepsilon_i-(1-\eta)\beta - (1-\eta)\frac{1}{n}\sum_j(\varepsilon_j))^2\\
+&=\frac{1}{n}\sum_i(\eta \beta + \varepsilon_i - (1-\eta)\frac{1}{n}\sum_j\varepsilon_j)^2\\
+&\equiv\frac{1}{n}\sum_i r_i^2
+\end{aligned}
+$$
+
+Where that last step is just defining $r_i$ to be everything inside the the summation.
+
+The expected loss is then $E\left[\frac{1}{n}\sum_i r_i^2\right]$. Which by linearity
+expectations is the same $\frac{1}{n}\sum_iE\left[ r_i^2\right]$, But since every $r_i$ is constructed with the same distributions, each of their expectations will be the same. So the expected loss reduces to:$\frac{1}{n}nE\left[ r_1^2\right]=E\left[ r_1^2\right]$. That is to say that the expected loss over
+the whole sample is the same as the expected loss on an arbitrarily selected unit.
+
+We can then deduce:
+
+
+\begin{align*}
+E\left[ r_1^2\right]&=V(r^2)+E[r]^2\\
+&=V(r^2)+E\left[\eta \beta + \varepsilon_i - (1-\eta)\frac{1}{n}\sum_j\varepsilon_j\right]^2 \\
+&=V(r^2)+\left(E\left[\eta \beta\right] + E\left[\varepsilon_i\right] - (1-\eta)E\left[\frac{1}{n}\sum_j\varepsilon_j\right]\right)^2 \\
+&=V(r^2)+\left(\eta \beta + 0- (1-\eta)0\right)^2 \\
+&=V(r^2)+\left(\eta \beta\right)^2 \\
+&=V\left(\eta \beta + \varepsilon_i - (1-\eta)\frac{1}{n}\sum_j\varepsilon_j\right)+\left(\eta \beta\right)^2 \\
+&=V\left(\varepsilon_i - (1-\eta)\frac{1}{n}\sum_j\varepsilon_j\right)+\left(\eta \beta\right)^2 \\
+&=V\left(\varepsilon_i - \frac{(1-\eta)}{n}\varepsilon_i - \frac{(1-\eta)}{n}\sum_{j\neq i}\varepsilon_j\right)+\left(\eta \beta\right)^2 \\
+&=V\left(\frac{n-(1-\eta)}{n}\varepsilon_i - \frac{(1-\eta)}{n}\sum_{j\neq i}\varepsilon_j\right)+\left(\eta \beta\right)^2 \\
+&=V\left(\frac{n-(1-\eta)}{n}\varepsilon_i\right) + V\left(\frac{(1-\eta)}{n}\sum_{j\neq i}\varepsilon_j\right)+\left(\eta \beta\right)^2  \tag{made to be indep.}\\
+&=\left(\frac{n-(1-\eta)}{n}\right)^2\sigma^2 + V\left(\frac{(1-\eta)}{n}\sum_{j\neq i}\varepsilon_j\right)+\left(\eta \beta\right)^2 \\
+&=\left(\frac{n-(1-\eta)}{n}\right)^2\sigma^2 + \left(\frac{(1-\eta)}{n}\right)^2(n-1)\sigma^2+\left(\eta \beta\right)^2 \\
+&=\frac{\sigma^2}{n^2}\left[\left(n-(1-\eta)\right)^2 + \left((1-\eta)\right)^2(n-1)\right]+\left(\eta \beta\right)^2 \\
+&=\frac{\sigma^2}{n^2}\left[\left((n-1)+\eta)\right)^2 + \left((1-\eta)\right)^2(n-1)\right]+\left(\eta \beta\right)^2 \\
+&=\frac{\sigma^2}{n^2}\left[(n-1)^2+2\eta(n-1)+\eta^2 + (1-2\eta-\eta^2)(n-1)\right]+\left(\eta \beta\right)^2 \\
+&=\frac{\sigma^2}{n^2}\left[(n-1)^2+2\eta(n-1)+\eta^2 + (n-1)-2\eta(n-1)-\eta^2(n-1)\right]+\left(\eta \beta\right)^2 \\
+&=\frac{\sigma^2}{n^2}\left[(n-1)^2+\eta^2 + (n-1)-\eta^2(n-1)\right]+\left(\eta \beta\right)^2 \\
+&=\frac{\sigma^2}{n^2}\left[(n-1)((n-1)+1)+\eta^2 -\eta^2(n-1)\right]+\left(\eta \beta\right)^2 \\
+&=\frac{\sigma^2}{n^2}\left[(n-1)n+\eta^2 -\eta^2(n-1)\right]+\left(\eta \beta\right)^2 \\
+&=\frac{\sigma^2}{n^2}\left[(n-1)n+n\eta^2\right]+\left(\eta \beta\right)^2 \\
+&=\frac{\sigma^2}{n}\left[(n-1)+\eta^2\right]+\left(\eta \beta\right)^2 \\
+\end{align*}
+
+For the out of sample error, assuming correct specification things are even easier.
+Representing $y_{n+1}$ as $y_{n+1}=\beta + \varepsilon_{n+1}$, then we can express
+
+$$
+\begin{aligned}
+E[(y_{n+1}-\hat\beta_\lambda)^2]&=E[(y_{n+1}-(1-\eta)\overline y)^2]\\
+&=E[y_{n+1}^2-2(1-\eta)y_{n+1}\overline y+(1-\eta)^2\bar y^2]\\
+&=E[y_{n+1}^2]-2(1-\eta)E[y_{n+1}\overline y]+(1-\eta)^2E[\bar y^2]\\
+&=E[y_{n+1}^2]-2(1-\eta)E[y_{n+1}]E[\overline y]+(1-\eta)^2E[\bar y^2], \text{bc indep} \\ 
+&=E[y_{n+1}^2]-2(1-\eta)\beta^2+(1-\eta)^2E[\bar y^2] \\
+&=V(y_{n+1})+E[y_{n+1}]^2-2(1-\eta)\beta^2+(1-\eta)^2E[\bar y^2] \\
+&=\sigma^2+\beta^2-2(1-\eta)\beta^2+(1-\eta)^2E[\bar y^2] \\
+&=\sigma^2+(1-2(1-\eta))\beta^2+(1-\eta)^2E[\bar y^2] \\
+&=\sigma^2+(-1+2\eta)\beta^2+(1-\eta)^2E[\bar y^2] \\
+&=\sigma^2+(-1+2\eta)\beta^2+(1-\eta)^2V[\bar y]+(1-\eta)^2E[\bar y]^2 \\
+&=\sigma^2+(-1+2\eta)\beta^2+(1-\eta)^2\frac{\sigma^2}{n}+(1-\eta)^2\beta^2 \\
+&=\sigma^2+(-1+2\eta+(1-\eta)^2)\beta^2+(1-\eta)^2\frac{\sigma^2}{n}\\
+&=\sigma^2+(-1+2\eta+1-2\eta+\eta^2)\beta^2+(1-\eta)^2\frac{\sigma^2}{n}\\
+&=\sigma^2+\eta^2\beta^2+(1-\eta)^2\frac{\sigma^2}{n}\\
+&=(n+(1-\eta)^2)\frac{\sigma^2}{n}+\eta^2\beta^2\\
+&=\left(1+\frac{(1-\eta)^2}{n}\right)\sigma^2+\eta^2\beta^2\
+\end{aligned}
+$$
+
+And with some (ommited) algebra, one can show that in sample loss is smaller than
+out of sample loss whenever $\eta\leq 1$. And since $\eta = \frac{\lambda}{n+\lambda}$ and $n\geq 0,\lambda \geq 0$, this condition will always hold. We always perform better in sample than out. This kinda makes sense.

@@ -1,0 +1,219 @@
+---
+title: "Problem Set 1"
+author: "Aaron Graybill"
+output: pdf_document
+header-includes:
+  - \usepackage{amsmath}
+
+---
+
+I did not collaborate with anyone on any of these questions. Also the spacing is
+very weird because of Rmarkdown, sorry about that!
+
+# Problem 1
+
+## 1.a 
+
+Intuitively, to have a unique solution, we must have that both $b_0$ and $b_1$
+actually change the objective function. For example, notice that if $x_i=0$ for
+all $i$, then the choice of $b_1$ is completely immaterial. Similarly if $x_i=c$
+for a constant $c$ for all $i$, changing $b_1$ has the same effect to changing $b_0$
+so there would be a multiplicity of solutions. Therefore, we get a unqiue solution
+when there is variance in the $x_i$s. If there were more variables, this equivalent
+to requiring the design matrix to be full rank.
+
+## 1.b
+
+A nice way to derive the desired condition is to first define $b=\begin{pmatrix} b_0 \\ b_1 \end{pmatrix}$. Then we express the optimization problem as:
+
+$$
+\begin{aligned}
+\arg\min_b \sum_i\left(y_i-b'z_i\right)^2
+\end{aligned}
+$$
+
+Which has the (vector) first order condition:
+
+$$
+\begin{aligned}
+\sum_i 2(y_i-b'z_i)(-z_i')&=0\\
+2\sum_i (y_i-b'z_i)(-z_i')&=0\\
+\sum_i (y_i-b'z_i)(-z_i')&=0\\
+\sum_i -y_iz_i'+b'z_iz_i'&=0\\
+\sum_i b'z_iz_i'&=\sum_iy_iz_i'\\
+b'\sum_i z_iz_i'&=\sum_iy_iz_i'\\
+b'&=\left(\sum_iy_iz_i'\right)\left(\sum_i z_iz_i'\right)^{-1}\\
+b&=\left(\left(\sum_iy_iz_i'\right)\left(\sum_i z_iz_i'\right)^{-1}\right)'\\
+b&=\left(\left(\sum_i z_iz_i'\right)^{-1}\right)'\left(\sum_iy_iz_i'\right)'\\
+b&=\left(\left(\sum_i z_iz_i'\right)^{-1}\right)'\left(\sum_iz_iy_i\right)\\
+b&=\left(\sum_i z_iz_i'\right)^{-1}\left(\sum_iz_iy_i\right)\\
+\end{aligned}
+$$
+
+
+That last line uses the fact that the inverse of that sum-of-outer-product matrices
+must be symmetric since it is the sum of symmetric matrices, so its inverse
+must be symmetric.
+
+## 1.c
+
+One way to approach this question is to rederive $\hat\beta$ as though they were
+scalars. Taking the derivative wrt $b_0$, the FOC would be:
+
+$$
+\begin{aligned}
+\sum_i2(y_i-b_0-b_1x_i)=0\\
+\sum_i(y_i-b_0-b_1x_i)=0\\
+\sum_i(y_i-b_0-b_1x_i)=0\\
+-nb_0+\sum_iy_i-b_1x_i&=0\\
+\sum_iy_i-b_1x_i&=nb_0\\
+\frac{1}{n}\sum_iy_i-b_1x_i&=b_0\\
+\end{aligned}
+$$
+
+Then the FOC for $b_1$ is:
+
+$$
+\begin{aligned}
+\sum_i2(y_i-b_0-b_1x_i)(-x_i)&=0\\
+\sum_i(y_i-b_0-b_1x_i)(-x_i)&=0\\
+\sum_i(-y_ix_i+b_0x_i+b_1x_i^2)&=0\\
+\sum_ib_0x_i&=\sum_i y_ix_i-b_1x_i^2\\
+b_0\sum_ix_i&=\sum_i y_ix_i-b_1x_i^2\\
+\left(\frac{1}{n}\sum_iy_i-b_1x_i\right)\sum_ix_i&=\sum_i y_ix_i-b_1x_i^2\\
+\frac{1}{n}\left(\frac{1}{n}\sum_iy_i-b_1x_i\right)\sum_ix_i&=\frac{1}{n}\sum_i y_ix_i-b_1x_i^2\\
+\frac{1}{n}\left(\frac{1}{n}\sum_iy_i-b_1x_i\right)\sum_ix_i&=\frac{1}{n}\sum_i y_ix_i-\frac{1}{n}\sum_ib_1x_i^2\\
+\frac{1}{n}\left(\frac{1}{n}\sum_iy_i-b_1x_i\right)\sum_ix_i&=\frac{1}{n}\sum_i y_ix_i-b_1\frac{1}{n}\sum_ix_i^2\\
+\frac{1}{n}\left(\frac{1}{n}\sum_iy_i-b_1x_i\right)\sum_ix_i&=\frac{1}{n}\sum_i y_ix_i-b_1\left(\mathbb{V}_n[x]+\mathbb{E}_n[x]^2\right)*\\
+\frac{1}{n}\left(\frac{1}{n}\sum_iy_i-b_1x_i\right)\sum_ix_i&=(\mathbb{C}_n[x,y]+\mathbb{E}_n[x]\mathbb{E}_n[y])-b_1\left(\mathbb{V}_n[x]+\mathbb{E}_n[x]^2\right)*\\
+\left(\frac{1}{n}\sum_iy_i-b_1x_i\right)\mathbb{E}_n[x]&=(\mathbb{C}_n[x,y]+\mathbb{E}_n[x]\mathbb{E}_n[y])-b_1\left(\mathbb{V}_n[x]+\mathbb{E}_n[x]^2\right)\\
+\left(\mathbb{E}_n[y]-b_1\mathbb{E}_n[x]\right)\mathbb{E}_n[x]&=(\mathbb{C}_n[x,y]+\mathbb{E}_n[x]\mathbb{E}_n[y])-b_1\left(\mathbb{V}_n[x]+\mathbb{E}_n[x]^2\right)\\
+\left(\mathbb{E}_n[y]-b_1\mathbb{E}_n[x]\right)\mathbb{E}_n[x]+b_1\left(\mathbb{V}_n[x]+\mathbb{E}_n[x]^2\right)&=(\mathbb{C}_n[x,y]+\mathbb{E}_n[x]\mathbb{E}_n[y])\\
+\mathbb{E}_n[y]\mathbb{E}_n[x]-b_1\mathbb{E}_n[x]^2+b_1\left(\mathbb{V}_n[x]+\mathbb{E}_n[x]^2\right)&=(\mathbb{C}_n[x,y]+\mathbb{E}_n[x]\mathbb{E}_n[y])\\
+-b_1\mathbb{E}_n[x]^2+b_1\left(\mathbb{V}_n[x]+\mathbb{E}_n[x]^2\right)&=(\mathbb{C}_n[x,y]+\mathbb{E}_n[x]\mathbb{E}_n[y])-\mathbb{E}_n[y]\mathbb{E}_n[x]\\
+-b_1\mathbb{E}_n[x]^2+b_1\left(\mathbb{V}_n[x]+\mathbb{E}_n[x]^2\right)&=\mathbb{C}_n[x,y]\\
+b_1\mathbb{V}_n[x]&=\mathbb{C}_n[x,y]\\
+b_1&=\mathbb{C}_n[x,y]/\mathbb{V}_n[x]\\
+\end{aligned}
+$$
+
+Throughout that proof, I make extensive use of the definitions of $\mathbb{E}$. In
+the lines with $*$, I make use of a useful decomposition of the covariance (and by proxy the variance):
+
+$$
+\begin{aligned}
+\mathbb{C}\text{ov}_n(x,y)&\equiv\frac{1}{n}\sum_i(x_i-\mathbb{E}_n[x])(y_i-\mathbb{E}_n[y])\\
+&=\frac{1}{n}\sum_i x_iy_i-\frac{1}{n}\mathbb{E}_n[x]\sum_iy_i-\frac{1}{n}\mathbb{E}_n[x]\sum_i y_i+\sum_i\frac{1}{n}\mathbb{E}_n[x]\mathbb{E}_n[y]\\
+&=\frac{1}{n}\sum_i x_iy_i-\mathbb{E}_n[x]\mathbb{E}_n[y]-\mathbb{E}_n[x]\mathbb{E}_n[x]+\mathbb{E}_n[x]\mathbb{E}_n[y]\\
+&=\frac{1}{n}\sum_i x_iy_i-\mathbb{E}_n[x]\mathbb{E}_n[y]
+\end{aligned}
+$$
+
+In particular, I use, $\frac{1}{n}\sum xy = \mathbb{C}_n[x,y]+\mathbb{E}_n[x]\mathbb{E}_n[y]$
+for both the variance and the covariance.
+
+Now plugging into the FOC for $b_0$ we can recover $\hat\beta_0$:
+
+$$
+\begin{aligned}
+b_0&=\frac{1}{n}\sum_iy_i-b_1x_i\\
+&= \mathbb{E}_n[y]-\frac{\mathbb{C}_n[x,y]}{\mathbb{V}_n[x]} \mathbb{E}_n[x]
+\end{aligned}
+$$
+
+
+
+
+## 1.d
+
+I apologize for how meandering this proof is.
+
+Note first that when $x$ is binary, we must have:
+
+$$
+\mathbb{E}_n[x]\equiv\frac{1}{n}\sum_{i=1}x_i=\frac{1}{n}\sum_{i:x_i=1} 1+\frac{1}{n}\sum_{i:x_i=0} 0=\frac{1}{n}\sum_{i:x_i=1} 1
+$$
+
+Recall the covariance decomposition: $\frac{1}{n}\sum_i x_iy_i-\mathbb{E}_n[x]\mathbb{E}_n[y]$
+
+When $x_i$ is binary, then the first part of the sum there only includes the $y_i$
+where $x_i=1$. Which is to say that the covariance is simply:
+
+$$
+\frac{1}{n}\sum_{x_i=1} y_i-\mathbb{E}_n[x]\mathbb{E}_n[y]
+$$
+
+And notice that $\mathbb{E}_n[y]$ could alternately be written as:
+
+$$
+\begin{aligned}
+\mathbb{E}_n[y]&\equiv\frac{1}{n}\sum_{i} y_i
+\\&=\frac{1}{n}\left(\sum_{x_i=0} y_i + \sum_{x_i=1}y_i\right)
+\end{aligned}
+$$
+
+Which means the covariance is:
+
+$$
+\begin{aligned}
+\mathbb{C}\text{ov}_n(x,y)&=\frac{1}{n}\sum_{x_i=1} y_i-\mathbb{E}_n[x]\frac{1}{n}\left(\sum_{x_i=0} y_i + \sum_{x_i=1}y_i\right)\\
+&=\frac{1}{n}\left(\sum_{x_i=1} y_i-\mathbb{E}_n[x]\left(\sum_{x_i=0} y_i + \sum_{x_i=1}y_i\right)\right)\\
+&=\frac{1}{n}\left((1-\mathbb{E}_n[x])\sum_{x_i=1} y_i-\mathbb{E}_n[x]\sum_{x_i=0} y_i \right)\\
+&=(1-\mathbb{E}_n[x])\frac{1}{n}\sum_{x_i=1} y_i-\mathbb{E}_n[x]\frac{1}{n}\sum_{x_i=0} y_i
+\end{aligned}
+$$
+
+Using the simplification of the covariance, $\frac{1}{n}\sum_i x_iy_i-\mathbb{E}_n[x]\mathbb{E}_n[y]$ to compute the variance, we get:
+
+$$
+\begin{aligned}
+\frac{1}{n}\sum_{x_i=1}1 -\frac{1}{n}\sum_{x_i=1}1\frac{1}{n}\sum_{x_i=1}1\\
+\left(\frac{1}{n}\sum_{x_i=1}1\right)\left(1-\frac{1}{n}\sum_{x_i=1}1\right)\\
+\left(\frac{1}{n}\sum_{x_i=1}1\right)\left(\frac{1}{n}\sum_{x_i=0}1\right)
+\end{aligned}
+$$
+
+Where the last line uses the property that $\sum_{x_i=0}1 + \sum_{x_i=1}1=n$.
+
+Dividing variance and covariance, we have:
+
+$$
+\begin{aligned}
+\hat\beta_1&=\frac{(1-\mathbb{E}_n[x])\frac{1}{n}\sum_{x_i=1} y_i-\mathbb{E}_n[x]\frac{1}{n}\sum_{x_i=0} y_i}{\left(\frac{1}{n}\sum_{x_i=1}1\right)\left(\frac{1}{n}\sum_{x_i=0}1\right)}\\
+&=\frac{(1-\mathbb{E}_n[x])\frac{1}{n}\sum_{x_i=1} y_i}{\left(\frac{1}{n}\sum_{x_i=1}1\right)\left(\frac{1}{n}\sum_{x_i=0}1\right)}-\frac{\mathbb{E}_n[x]\frac{1}{n}\sum_{x_i=0} y_i}{{\left(\frac{1}{n}\sum_{x_i=1}1\right)\left(\frac{1}{n}\sum_{x_i=0}1\right)}}\\
+&=\frac{\left(\frac{1}{n}\sum_{x_i=0}1\right)\frac{1}{n}\sum_{x_i=1} y_i}{\left(\frac{1}{n}\sum_{x_i=1}1\right)\left(\frac{1}{n}\sum_{x_i=0}1\right)}-\frac{\left(\frac{1}{n}\sum_{x_i=1}1\right)\frac{1}{n}\sum_{x_i=0} y_i}{{\left(\frac{1}{n}\sum_{x_i=1}1\right)\left(\frac{1}{n}\sum_{x_i=0}1\right)}}\\
+&=\frac{\frac{1}{n}\sum_{x_i=1} y_i}{\frac{1}{n}\sum_{x_i=1}1}-\frac{\frac{1}{n}\sum_{x_i=0} y_i}{{\frac{1}{n}\sum_{x_i=0}1}}\\
+&=\frac{\sum_{x_i=1} y_i}{\sum_{x_i=1}1}-\frac{\sum_{x_i=0} y_i}{{\sum_{x_i=0}1}} \quad \square\\
+\end{aligned}
+$$
+
+\newpage
+
+# Problem 2
+
+```{r}
+data = read.csv('nls.csv')
+y <- data$luwe
+x <- data$educ
+ones <- rep(1, length(x))
+
+cov <- function(y,x){
+  # implicitly this takes care of 1/n
+  mean(x*y)-(mean(x)*mean(y))
+}
+
+beta_1 <- cov(y,x)/cov(x,x)
+beta_0 <- mean(y)-(beta_1*mean(x))
+```
+
+```{r, echo = F}
+print(paste0("My Estimated slope is: ",beta_1))
+print(paste0("My Estimated intercept is: ",beta_0))
+```
+
+Here I compare my calculations to the in-built function:
+```{r}
+benchmark_coefs <- lm(y ~ x)$coefficients |> unname()
+
+all.equal(benchmark_coefs,c(beta_0,beta_1))
+```

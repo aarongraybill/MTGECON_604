@@ -1,0 +1,341 @@
+---
+title: "Problem Set 2"
+author: "Aaron Graybill"
+output: pdf_document
+header-includes:
+  - \usepackage{amsmath}
+
+---
+
+For every single question, unless otherwise noted I collaborated with Blair Moore, Thomas Li, and
+John Cho.
+
+# Problem 1
+
+## Problem 1.a.
+
+For all $i\neq n$, the expectation is zero, $1/2 \cdot (-1) + 1/2 \cdot (1)=0$.
+Note that for all realizations of $\varepsilon_i$, the squared value is exactly
+one. So $E[\varepsilon_i^2]-E[\varepsilon_i]^2=E[1]-0^2=1$. For covariance, with
+$i,j\neq n$, then by independence the covariance is zero.
+
+For $i=n$. Note that the expectation: 
+
+\begin{align*}
+  E[\varepsilon_n]&=E[\prod_{i<n}(-1)\varepsilon_i]\\
+  &=\prod_{i<n}(-1)E[\varepsilon_i] \tag{Independence}\\
+  &=\prod_{i<n}(-1)0\\
+  &=0
+\end{align*}
+
+Similarly to before, the only possible values of $\varepsilon_n$ are $-1$ and $1$,
+so the squares are only $1$. The variance is:
+
+\begin{align*}
+  Var(\varepsilon_n)&=E[\varepsilon_n^2]-E[\varepsilon_n]^2\\
+  &=E[1]-0^2\\
+  &=1
+\end{align*}
+
+For the covariance between $n$ and $i\neq n$, we do:
+
+\begin{align*}
+  Cov(\varepsilon_n,\varepsilon_i)&=E[\varepsilon_n\cdot\varepsilon_i]-E[\varepsilon_i]E[\varepsilon_n]\\
+  &=E[\varepsilon_n\cdot\varepsilon_i]-0\cdot0\\
+  &=E[\prod_{j<n}(-1)\varepsilon_i\cdot\varepsilon_i]\\
+  &=E[(-\varepsilon_i)(\varepsilon_i) \prod_{j<n,j\neq i}(-1)\varepsilon_i\cdot\varepsilon_i]\\
+  &=E[(-\varepsilon_i)(\varepsilon_i)]\cdot E[\prod_{j<n,j\neq i}(-1)\varepsilon_i\cdot\varepsilon_i] \tag{Independence}\\
+  &=E[(-\varepsilon_i)(\varepsilon_i)]\cdot \prod_{j<n,j\neq i}(-1)E[\varepsilon_i\cdot\varepsilon_i] \tag{Independence}\\
+  &=E[1]\cdot \prod_{j<n,j\neq i}(-1)0 \\
+  &=1\cdot 0 \\
+  &=0
+\end{align*}
+
+## Problem 1.b.
+
+We can compute the expected value with
+
+\begin{align*}
+E[\hat\beta]&=E\left[\frac{1}{n}\sum y_i\right]\\
+&=\frac{1}{n}E\left[\sum y_i\right]\\
+&=\frac{1}{n}\sum E[y_i]\\
+&=\frac{1}{n}\sum E[\beta_0 + \varepsilon_i]\\
+&=\frac{1}{n}\sum E[\beta_0] + E[\varepsilon_i]\\
+&=\frac{1}{n}\sum \beta_0 + \frac{1}{n}\sum E[\varepsilon_i]\\
+&=\frac{1}{n}n \beta_0 + \frac{1}{n}\sum E[\varepsilon_i]\\
+&=\frac{1}{n}n \beta_0 + \frac{1}{n}\sum 0\\
+&=\frac{1}{n}n \beta_0 + 0\\
+&=\beta_0
+\end{align*}
+
+We can compute the variance by noting that $\hat\beta = \frac{1}{n}\mathbf{1}^T\mathbf{y}$.
+So its variance will be: $\hat\beta = \frac{1}{n^2}\mathbf{1}^T\Sigma \mathbf{1}$. But as
+argued previously, the off-diagonal elements are all zero and all of the on-diagonal
+elements are exactly one. So the variance must be $\frac{1}{n^2}\mathbf{1}^T I\mathbf{1}=\frac{n}{n^2}=\frac{1}{n}$.
+
+
+## Problem 1.c.
+
+Since there are no covariates, a linear estimator will always be of the form: $a^T y$
+For a vector of weights, $a$ and the vector of data $y$.
+
+Unbiasedness requires:
+
+\begin{align*}
+\beta_0&=E[a^Ty]\\
+\beta_0&=E[a^T(\beta_01+\varepsilon)]\\
+\beta_0&=E[\beta_0a^T1]+E[a^T\varepsilon]\\
+\beta_0&=\beta_0E[a^T1]+a^TE[\varepsilon]\\
+\beta_0&=\beta_0E[a^T1]+a^T0\\
+\beta_0&=\beta_0E[a^T1]\\
+1&=E[a^T1]
+\end{align*}
+
+This gives a simple constraint for unbiasedness of the linear estimator.
+
+The variance of such an estimator will be:
+
+$$
+\begin{aligned}
+Var(a^T y)&=Var(a^T(\beta_0 1 + \varepsilon))\\
+&=Var(\beta_0 a^T1 + a^T\varepsilon)\\
+&=Var(a^T\varepsilon)\\
+&=a^TIa\\
+&=a^Ta\\
+\end{aligned}
+$$
+
+So the minimal variance linear unbiased estimator solves the following Langrian:
+
+$$
+\mathcal{L}: a^Ta-\lambda(a^T1-1)
+$$
+
+With first order conditions:
+
+$$
+\begin{aligned}
+2a-\lambda 1&=0\implies a=\lambda/2 \cdot1\implies a=1/n\cdot 1\\
+a^T1&=1\implies \lambda/2 \cdot1^T\cdot 1=1\implies\lambda=2/n
+\end{aligned}
+$$
+
+Therefore the minimum variance estimator is exactly the one that puts each weight
+on each value of $y$, exactly what $\hat\beta$ does.
+
+
+
+## Problem 1.d.
+
+Note that there are only two possible values of $y$, $\beta_0+1$ or $\beta_0-1$.
+Clearly, if the value $y=\beta_0+1$ ever occurs, then $\max\{y\}=\beta_0+1$. So
+the maximum minus one is $\beta_0$. Now I will argue that $\beta_0+1$ always
+occurs. Suppose that any of the first $n-1$ have an $\varepsilon_i=1$, then
+we have the desired value, so we will correctly recover $\beta_0$. If the first
+$n-1$ values are $-1$, then by assumption $\varepsilon_n=\prod-(-1)=\prod 1=1$.
+
+So the maximum will always be $\beta_0+1$, so we always correctly recover $\beta_0$.
+Since there is only one possible value, the variance must also be zero.
+
+## Problem 1.e.
+
+The maximum is not a linear operator, so it is allowed to have lower variance
+while being unbiased without violating the gauss markov theorem.
+
+# Problem 2
+
+## Problem 2.a.
+
+I want to be precise about what this question is asking because I think there's
+some things that are implicit but require explication to get a rigorous answer.
+
+In particular, I will **define** $\tilde\beta$ as follows:
+
+$$
+(\tilde\alpha,\tilde\beta)\equiv\arg\min_{a,b}E[ \left(E[y|x]-(a+bx)\right)^2]
+$$
+
+But since we know the true DGP, that simplifies to:
+
+$$
+(\tilde\alpha,\tilde\beta)\equiv\arg\min_{a,b} E[\left(E[\alpha+\beta x+\gamma x^2+\varepsilon]-(a+bx)\right)^2]
+$$
+
+By linearity of expectations and conditional mean zero, we can further simplify to:
+
+$$
+\begin{aligned}
+(\tilde\alpha,\tilde\beta)&\equiv\arg\min_{a,b} E[\left(E[\alpha+\beta x+\gamma x^2+\varepsilon|x]-(a+bx)\right)^2]\\
+&=\arg\min_{a,b}E[\left(\alpha+\beta x+\gamma x^2+E[\varepsilon|x]-(a+bx)\right)^2]\\
+&=\arg\min_{a,b}E[\left(\alpha+\beta x+\gamma x^2+0-(a+bx)\right)^2]\\
+&=\arg\min_{a,b}E[\left(\alpha+\beta x+\gamma x^2-(a+bx)\right)^2]\\
+\end{aligned}
+$$
+
+Since the problem is globally convex, the optimal parameters are pinned down with
+the first order conditions:
+
+$$
+\begin{aligned}
+\frac{d}{da}&\colon E[\alpha+\beta x+\gamma x^2-(a+bx)]&=0\\
+\frac{d}{db}&\colon E[\left(\alpha+\beta x+\gamma x^2-(a+bx)\right)(x)]&=0\\
+\end{aligned}
+$$
+
+The second first order condition is something like a covariance, so we can use 
+the covariance decomposition, $Cov(x,y)=E[xy]-E[x]E[y]$ to rewrite the first 
+order condition as:
+
+$$
+\begin{aligned}
+0&=E[\left(\alpha+\beta x+\gamma x^2-(a+bx)\right)(x)]\\
+&=Cov(\alpha+\beta x+\gamma x^2-(a+bx),x)+\underbrace{E[\alpha+\beta x+\gamma x^2-(a+bx)]}_{0 \text{ by first FOC}}E[x]\\
+&=Cov(\alpha+\beta x+\gamma x^2-(a+bx),x)+0E[x]\\
+&=Cov(\alpha+\beta x+\gamma x^2-(a+bx),x)\\
+&=Cov((\alpha-a)+(\beta-b) x+\gamma x^2,x)\\
+&=Cov(\beta-b) x+\gamma x^2,x)\\
+&=Cov((\beta-b) x,x)+Cov(\gamma x^2,x)\\
+&=(\beta-b)Cov(x,x)+\gamma Cov(x^2,x)\\
+&=(\beta-b)Var(x)+\gamma Cov(x^2,x)\\
+&=\beta Var(x)-bVar(x)+\gamma Cov(x^2,x)\\
+b&=\frac{\beta Var(x)}{Var(x)}+\frac{\gamma Cov(x^2,x)}{Var(x)}\\
+\tilde\beta&=\beta + \gamma\frac{Cov(x^2,x)}{Var(x)}
+\end{aligned}
+$$
+Finally recovering the familiar omitted variable bias form.
+
+But since we're looking at the covariance between a random variable and a function
+of itself, we can simplify further to give:
+
+$$
+\begin{aligned}
+\tilde\beta&=\beta + \gamma\frac{Cov(x^2,x)}{Var(x)}\\
+&=\beta + \gamma\frac{E[x^2x]-E[x^2]E[x]}{Var(x)}\\
+&=\beta + \gamma\frac{E[x^3]-(Var(x)+E[x]^2)\mu}{Var(x)}\\
+&=\beta + \gamma\frac{E[x^3]-(1+\mu^2)\mu}{1}\\
+&=\beta + \gamma\left(E[x^3]-(1+\mu^2)\mu\right)\\
+\end{aligned}
+$$
+
+Where we are told that the variance is 1 and standard deviation is $\mu$. In
+this part of the question, we assume that $\mu=0$, so the thing being subtracted
+is zero. Furthermore, since the mean is zero, and the normal distribution is symmetric,
+all odd powers of the mean-zero normal will stay as symmetric distributions, so
+the third moment of $x$ is also zero. Meaning that in this case, we have exactly
+$\tilde\beta =\beta$.
+
+Now we should be precise in what that means, that means in the case where the $x$s
+are mean zero and symmetric, the $\tilde\beta$ we are trying to estimate is
+exactly the same as the $\beta$ from the full data generating process. Since
+we know that the $\hat\beta$ estimating $\tilde\beta$ is unbiased (for all functional
+forms under the best linear predictor framework), we know that the expectation
+of $\hat\beta$ from the short regression is the same as the slope coefficient, $\beta$ in
+the true model.
+
+## Problem 2.b.
+
+In the case of $\mu\neq 0$, we cannot apply the same tricks we did above. In
+particular, the third moment will no longer be zero. However, since the family
+of normal distributions are closed under constant addition, we can represent
+$x$ as $z+\mu$ where $z$ is a standard normal distribution.
+
+Then we can compute $E[x^3]=E[(z+\mu)^3]$ with:
+
+$$
+\begin{aligned}
+E[x^3]&=E[(z+\mu)^3]\\
+&=E[z^3+3z^2\mu+3z\mu^2+\mu^3]\\
+&=E[z^3]+3\mu E[z^2]+3\mu^2 E[z]+\mu^3\\
+&=0 + 3\mu(Var(x)+E[z]^2)+3\mu^2\cdot0 + \mu^3\\
+&=3\mu(Var(x)+E[z]^2) + \mu^3\\
+&=3\mu(Var(x)+0^2) + \mu^3\\
+&=3\mu(Var(x)) + \mu^3\\
+&=3\mu(1) + \mu^3\\
+&=(3 + \mu^2)\mu\\
+\end{aligned}
+$$
+
+From before we have:
+
+$$
+\begin{aligned}
+\tilde\beta &=\beta + \gamma\left(E[x^3]-(1+\mu^2)\mu\right)\\
+&=\beta + \gamma\left((3 + \mu^2)\mu-(1+\mu^2)\mu\right)\\
+&=\beta + \gamma\mu\left(3 + \mu^2-1-\mu^2\right)\\
+&=\beta + 2\gamma\mu\\
+\end{aligned}
+$$
+
+# Problem 3
+
+## Problem 3.a.
+
+The "correctly" specified model is estimated below:
+
+```{r}
+data <- read.csv('nls.csv')
+baseline_lm <- lm(luwe ~ 1 + exper + educ, data = data)
+
+X <- cbind(`(Intercept)` = rep(1,nrow(data)),exper = data$exper, educ = data$educ)
+y <- data$luwe
+
+beta_hat <- solve(t(X)%*% X)%*% t(X)%*% y
+
+# sanity check
+stopifnot(all.equal(setNames(c(beta_hat),rownames(beta_hat)), baseline_lm$coefficients))
+
+
+print(beta_hat)
+```
+
+Comparing this to a model without `educ` gives the following:
+
+```{r}
+X_short <- X[,-3]
+
+beta_hat_short <- solve(t(X_short)%*% X_short)%*% t(X_short)%*% y
+
+
+print(beta_hat_short)
+```
+
+We can explain the change in sign `exper` using the omitted variable bias formula:
+
+```{r}
+var_ratio <- cov(X[,'exper'],X[,'educ'])/var(X[,'exper'])
+ovb <- beta_hat['exper',] + (beta_hat['educ',]*var_ratio)
+
+print("Can we compute bias in short regression?")
+all.equal(unname(ovb), unname(beta_hat_short['exper',]))
+```
+
+## Problem 3.b.
+
+
+```{r}
+H_hat <- (1/nrow(X))*t(X)%*%X
+residuals <- y-X%*%beta_hat
+sigma_squared <- ((t(residuals) %*% residuals)/length(residuals))[1,1]
+
+Sigma_homoskedastic <-  sigma_squared * solve(H_hat) / length(y)
+homosked_ses <- sqrt(diag(Sigma_homoskedastic))
+
+cat("Homoskedastic Standard Errors:")
+print(homosked_ses)
+
+stopifnot(all(abs(Sigma_homoskedastic-vcov(baseline_lm))<.01))
+
+```
+
+
+## Problem 3.c.
+
+```{r}
+J_hat = (1/nrow(X))*t(X)%*%diag(c(residuals^2)) %*%X
+
+Sigma_heteroskedastic <- solve(H_hat) %*% J_hat %*% solve(H_hat) / length(y)
+heteroskeastic_ses <- sqrt(diag(Sigma_heteroskedastic))
+
+print("Heteroskedastic Standard Errors:")
+print(heteroskeastic_ses)
+```

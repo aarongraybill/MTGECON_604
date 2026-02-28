@@ -1,0 +1,499 @@
+---
+title: "Problem Set 3"
+author: "Aaron Graybill"
+output: pdf_document
+header-includes:
+  - \usepackage{amsmath}
+
+---
+
+For every single question, unless otherwise noted I collaborated with Blair Moore, Thomas Li, and
+John Cho.
+
+# Problem 1
+
+## Problem 1.a
+
+The conditional log-likelihood doesn't depend on the distribution of $x$. So we 
+only care about the probability of a given observation given $x$. Namely the
+likelihood a given observation $i$ observation being $y_i$ subject to parameters estimates $\beta$
+and covariates $x_i$ is:
+
+$$
+P(y_i|x_i)=\frac{(e^{x_i'\beta})^{y_i}e^{-e^{x_i'\beta}}}{y_i!}
+$$
+
+Which is a bit of mess. But we can simplify it when we take the log:
+
+$$
+\begin{aligned}
+\ell(z;\beta)&=\log\left(\prod_{i\in N}\frac{(e^{x_i'\beta})^{y_i}e^{-e^{x_i'\beta}}}{{y_i}!}\right)\\
+&=\sum_{i\in N}\log\left(\frac{(e^{x_i'\beta})^{y_i}e^{-e^{x_i'\beta}}}{{y_i}!}\right)\\
+&=\sum_{i\in N}\log((e^{x_i'\beta})^{y_i})+\sum_{i\in N}\log(e^{-e^{x_i'\beta}})-\sum_{i\in N}\log(y_i!)\\
+&=\sum_{i\in N}y_i\log(e^{x_i'\beta})-\sum_{i\in N}e^{x_i'\beta}-\sum_{i\in N}\log(y_i!)\\
+&=\sum_{i\in N}y_ix_i'\beta-\sum_{i\in N}e^{x_i'\beta}-\sum_{i\in N}\log(y_i!)\\
+&=\sum_{i\in N}y_ix_i'\beta-\sum_{i\in N}e^{x_i'\beta}-\sum_{i\in N}\underbrace{\sum_{k=1}^{y_i}\log(k)}_{\text{Sometimes empty}}\\
+&=\sum_{i\in N}y_ix_i'\beta-\sum_{i\in N}e^{x_i'\beta}-\sum_{i\in N}\sum_{k=1}^{y_i-1}\log(k+1)\\
+\end{aligned}
+$$
+
+Where the last two lines are alternate forms of the same thing (I mean duh, that's 
+all of algebra) but with different ways to index the log of the factorial. That's
+really more of a curiosity for me, because those won't affect the maximizing 
+choice of $\beta$ anyway, but it's kind of nice that the conditional log-likelihood function
+depends on something like the "total" number of events across all people (where each person might
+have multiple events according to the Poisson distribution).
+
+## Problem 1.b
+
+The score is the derivative of an individual's log-likelihood with respect to
+the estimands, in our case $\beta$. In our case, that would be:
+
+$$
+\begin{aligned}
+s_\beta(z_i)&=\frac{\partial}{\partial \beta}\left[y_ix_i'\beta-e^{x_i'\beta}-\log(y_i!)\right]\\
+&=y_ix_i-e^{x_i'\beta}x_i\\
+&=x_i(y_i-e^{x_i'\beta})
+\end{aligned}
+$$
+
+Which despite its simple form, I'm pretty sure that's a transcendental equation
+that we have no hope of solving in closed form for one person, let alone across
+the population.
+
+And just in case you were looking for the population score function, it would be
+this:
+
+$$
+\sum_i x_i(y_i-e^{x_i'\beta})
+$$
+
+To compute the Hessian $H$ matrix, we need to take a second derivative of the
+score function with respect to $\beta'$ giving:
+
+$$
+\begin{aligned}
+H&=\frac{\partial}{\partial\beta'} E\left[x(y-e^{x'\beta})\right]\\
+&=E\left[\frac{\partial}{\partial\beta'}x(y-e^{x'\beta})\right]\\
+&=E\left[\frac{\partial}{\partial\beta'}xy-\frac{\partial}{\partial\beta'}xe^{x'\beta}\right]\\
+&=E\left[0-\frac{\partial}{\partial\beta'}xe^{x_i'\beta}\right]\\
+&=-E\left[x\frac{\partial}{\partial\beta'}e^{x'\beta}\right]\\
+&=-E\left[xe^{x'\beta}x'\right]\\
+&=-E\left[e^{x_i'\beta}xx'\right]\\
+\end{aligned}
+$$
+
+And without knowing more about the distribution of $x$, that's the best we can
+do.
+
+The $J$ matrix is given by:
+
+$$
+\begin{aligned}
+J&=E[s_\beta(z)s_\beta(z)']\\
+&=E\left[\left(x_i(y_i-e^{x_i'\beta})\right)\left(x_i(y_i-e^{x_i'\beta})\right)'\right]\\
+&=E\left[(y_i-e^{x_i'\beta})^2 x_ix_i'\right]
+\end{aligned}
+$$
+
+## Problem 1.c
+
+We define 
+
+$$
+\beta_0 \equiv \arg\min_\beta Q_{\beta_0}(\beta)
+$$
+
+Where $Q(\beta)=E_{\beta_0}\left[\log(f_{\beta_0}(y|x))-\log(f_\beta(y|x))\right]$
+We'd like to show that the in sample, $\hat\beta$ converges in probability to
+that same $\beta_0$ as $n\to\infty$ so long as $E[y|x]=\exp(x'\beta)$.
+Since $\beta_0$ is the minimizer of a function, it is natural to employ the
+results from $M$-estimators that we learned in section.
+
+In particular, to show that that the in sample estimator of the minimizer, $\hat\beta$ is 
+consistent for $\beta_0$, we must establish four conditions:
+
+1. $E_{\beta_0}\left[\ell(z;\beta)\right]$ is uniquely minimized at $\beta_0$
+2. The space of possible $\beta$s is compact
+3. $E_{\beta_0}\left[\ell(z;\beta)\right]$ is continuous
+4. The sample analog of $E_{\beta_0}\left[\ell(z;\beta)\right]$ converges uniformly in probability to $E_{\beta_0}\left[\ell(z;\beta)\right]$
+
+Then, we have learned that this directly implies that $\hat\beta$ is consistent
+for $\beta_0$.
+
+Let's tackle each of those four separately. For 1., note that the hessian of $Q$ would
+be the same as the hessian derived above because the only parts that depend on $\beta$
+are the $f_\beta(y|x)$, which is exactly the conditional likelihood derived above.
+Then note that $-E\left[e^{x_i'\beta}xx'\right]$
+is negative semi-definite (the suff on the inside is positive or an outer product which is psd), so the
+function is globally concave, so there is a unique maximizer. In the population,
+the true $\beta_0$ must satisfy the FOC:
+
+$$
+\begin{aligned}
+0&=\frac{\partial}{\partial\beta} E_{\beta_0}\left[\log(f_{\beta_0}(y|x))-\log(f_\beta(y|x))\right]\\
+&= E_{\beta_0}\left[\frac{\partial}{\partial\beta}\log(f_{\beta_0}(y|x))-\frac{\partial}{\partial\beta}\log(f_\beta(y|x))\right]\\
+&= E_{\beta_0}\left[0-\frac{\partial}{\partial\beta}\log(f_\beta(y|x))\right]\\
+&= E_{\beta_0}\left[-\frac{\partial}{\partial\beta}\log(f_\beta(y|x))\right]\\
+&= E_{\beta_0}\left[-\frac{\partial}{\partial\beta}(yx'\beta -\exp(x'\beta))\right]\\
+&= E_{\beta_0}\left[-(yx -\exp(x'\beta)x)\right]\\
+&= E_{\beta_0}\left[-(y -\exp(x'\beta))x\right]\\
+&= E_{\beta_0}\left[E_{y|x}[-(y -\exp(x'\beta))x|x]\right]\\
+&= E_{\beta_0}\left[-(E_{y|x}[y] -\exp(x'\beta))x|x]\right]\\
+&= E_{\beta_0}\left[-(\exp(x'\beta_0) -\exp(x'\beta))x|x]\right]\\
+\end{aligned}
+$$
+
+Which clearly requires setting $\beta$ to be $\beta_0$. The last line comes from
+the assumption that the true conditional mean is as expected, even if the distribution
+is wrong.
+
+So $\beta=\beta_0$ is the unique maximizer
+
+For 2., here we would use economic intution to say put reasonable bounds on
+the values that $\beta_0$ might take in reality and only consider the compact set
+between those values.
+
+For 3., the function is clearly continuous.
+
+For 4. For uniform convergence of $\hat Q$ to $Q$, we need to show that for all
+true values of $\beta_0$, $\sup_\beta(|\hat Q(\beta) - Q(\beta)|)\to^p0$, that 
+is no values of $\beta$ stay extremely far away. This would require showing that 
+the maximum of the following expression:
+
+$$
+\sum_{i\in N}y_ix_i'\beta-\sum_{i\in N}e^{x_i'\beta}-\sum_{i\in N}\sum_{k=1}^{y_i-1}\log(k+1)
+$$
+
+which defines $\hat\beta$ goes to zero, no matter the value of $\beta$.
+
+This would complete the proof
+
+
+# Problem 2
+
+## Problem 2.a
+
+The likelihood for a given $y_i$ would be:
+
+$$
+\ell(y|x)=\log\left(\Phi(x'\beta)^{y}\cdot(1-\Phi(x'\beta))^{1-y}\right)=y\log(\Phi(x'\beta))+(1-y)\log(1-\Phi(x'\beta))
+$$
+And the score is the derivative with respect to $\beta$, so we have:
+
+$$
+\begin{aligned}
+s_\beta&=\frac{\partial}{\partial \beta}\left[y\log(\Phi(x'\beta))+(1-y)\log(1-\Phi(x'\beta))\right]\\
+&=y\frac{\partial}{\partial \beta}\log(x'\beta)+(1-y)\frac{\partial}{\partial \beta}\log(1-\Phi(x'\beta))\\
+&=y\frac{\phi(x'\beta)}{\Phi(x'\beta)}x+(1-y)\frac{-\phi(x'\beta)}{1-\Phi(x'\beta)}x\\
+&=x\left(y\frac{\phi(x'\beta)}{\Phi(x'\beta)}+(1-y)\frac{-\phi(x'\beta)}{1-\Phi(x'\beta)}\right)\\
+&=x\frac{(y-\Phi(x'\beta))\phi(x'\beta)}{\Phi(x'\beta)(1-\Phi(x'\beta))}\\
+&=x(y-\Phi(x'\beta))\frac{\phi(x'\beta)}{\Phi(x'\beta)(1-\Phi(x'\beta))}\\
+&\equiv x(y-\Phi(x'\beta))\alpha(x'\beta)
+\end{aligned}
+$$
+
+Which probably has a really nice interpretation in terms of hazard rates because
+in either binary case of $y$, the score cancels into something that looks exactly
+like a hazard rate. The problem is that the $\alpha$ function is virtually intractable
+to work with (or I'm bad at calculus), so I will never fully characterize $\alpha'(x'\beta)$.
+because it basically doesn't simplify.
+
+The Hessian is then
+
+$$
+\begin{aligned}
+H&=\frac{\partial}{\partial \beta'}E\left[x(y-\Phi(x'\beta))\alpha(x'\beta)\right]\\
+&=E\left[\frac{\partial}{\partial \beta'}x(y-\Phi(x'\beta))\alpha(x'\beta)\right]\\
+&=E\left[x\left(-\phi(x'\beta)x')\alpha(x'\beta)+(y-\Phi(x'\beta))\alpha'(x'\beta)x'\right)\right]\\
+&=E\left[xx'\left(-\phi(x'\beta))\alpha(x'\beta)+(y-\Phi(x'\beta))\alpha'(x'\beta)\right)\right]\\
+&=E\left[E[xx'\left(-\phi(x'\beta))\alpha(x'\beta)+(y-\Phi(x'\beta))\alpha'(x'\beta)\right)|x]\right]\\
+&=E\left[xx'\left(-\phi(x'\beta))\alpha(x'\beta)+E[y-\Phi(x'\beta)|x]\alpha'(x'\beta)\right)\right]\\
+&=-E\left[xx'\phi(x'\beta)\alpha(x'\beta)\right]+E\left[xx'E[y-\Phi(x'\beta)|x]\alpha'(x'\beta))\right]\\
+&=-E\left[xx'\phi(x'\beta)\frac{\phi(x'\beta)}{\Phi(x'\beta)(1-\Phi(x'\beta))}\right]+E\left[xx'(E[y|x]-\Phi(x'\beta))\alpha'(x'\beta))\right]\\
+&=-E\left[xx'\frac{\phi(x'\beta)^2}{\Phi(x'\beta)(1-\Phi(x'\beta))}\right]+E\left[xx'(E[y|x]-\Phi(x'\beta))\alpha'(x'\beta))\right]\\
+\end{aligned}
+$$
+Gnarly, but it will be useful to have decomposed into a structural component,
+and then one that depends on the possible misspecification.
+
+
+Anyway, let's
+compute the $J$ matrix:
+
+$$
+\begin{aligned}
+J&=E[s_\beta\cdot s_\beta']\\
+&=E\left[\left(x(y-\Phi(x'\beta))\alpha(x'\beta)\right)\left(x(y-\Phi(x'\beta))\alpha(x'\beta)\right)'\right]\\
+&=E\left[xx'\alpha(x'\beta)^2\left(y-\Phi(x'\beta)\right)^2\right]\\
+&=E\left[xx'\alpha(x'\beta)^2E\left[\left(y-\Phi(x'\beta)\right)^2\middle |x\right]\right]\\
+&=E\left[xx'\left(\frac{\phi(x'\beta)}{\Phi(x'\beta)(1-\Phi(x'\beta))}\right)^2E\left[\left(y-\Phi(x'\beta)\right)^2\middle |x\right]\right]\\
+&=E\left[xx'\frac{\phi(x'\beta)^2}{\Phi(x'\beta)^2(1-\Phi(x'\beta))^2}E\left[\left(y-\Phi(x'\beta)\right)^2\middle |x\right]\right]\\
+\end{aligned}
+$$
+
+## Problem 2.b
+
+Correct model specification means that $Pr(y=1|x)=\Phi(x'\beta)$. Noting that
+the expectation of a binary rv is simply $E[y|x]=Pr(y=1|x)\cdot 1$, so in our
+case, the expected value of $E[y|x]$ is simply $\Phi(x'\beta)$. That means that
+$E[(y-\Phi(x'\beta))^2|x]$ is actually just the variance of the bernoulli random
+variable since we're considering squared deviations of the binary $y$ from its
+mean. Its variance would then be $\Phi(x'\beta)(1-\Phi(x'\beta))$.
+
+Recalling from the previous question:
+
+$$
+\begin{aligned}
+H&=-E\left[xx'\frac{\phi(x'\beta)^2}{\Phi(x'\beta)(1-\Phi(x'\beta))}\right]+E\left[xx'(E[y|x]-\Phi(x'\beta))\alpha'(x'\beta))\right]\\
+&=-E\left[xx'\frac{\phi(x'\beta)^2}{\Phi(x'\beta)(1-\Phi(x'\beta))}\right]+E\left[xx'(\Phi(x'\beta)-\Phi(x'\beta))\alpha'(x'\beta))\right]\\
+&=-E\left[xx'\frac{\phi(x'\beta)^2}{\Phi(x'\beta)(1-\Phi(x'\beta))}\right]+E\left[xx'(0)\alpha'(x'\beta))\right]\\
+&=-E\left[xx'\frac{\phi(x'\beta)^2}{\Phi(x'\beta)(1-\Phi(x'\beta))}\right]\\
+J&=E\left[xx'E\left[(y-\Phi(x'\beta))^2|x\right]\frac{\phi(x'\beta)^2}{\Phi(x'\beta)^2(1-\Phi(x'\beta))^2}\right]\\
+&=E\left[xx'\Phi(x'\beta)(1-\Phi(x'\beta))\frac{\phi(x'\beta)^2}{\Phi(x'\beta)^2(1-\Phi(x'\beta))^2}\right]\\
+&=E\left[xx'\frac{\phi(x'\beta)^2}{\Phi(x'\beta)(1-\Phi(x'\beta))}\right]\\
+\end{aligned}
+$$
+Coolio, that verifies the identity.
+
+## Problem 2.c
+
+I already found the conditional log-likelihood for an individual observation. 
+So the conditional log likelihood for $n$ data points would be:
+
+$$
+\begin{aligned}
+\sum_i \ell(y_i|x_i)&=y_i\log(\Phi(x_i'\beta))+(1-y_i)\log(1-\Phi(x_i'\beta))
+\end{aligned}
+$$
+
+## Problem 2.d
+
+Unfortunately, this question will require me to compute the derivative of my $\alpha$ function, though I won't attempt to simplify it. See the following:
+
+$$
+\begin{aligned}
+\frac{d}{dz}\alpha(z)&=\frac{d}{dz}\left[\frac{\phi(z)}{\Phi(z)(1-\Phi(z))}\right]\\
+&=\frac{\phi'(z)\Phi(z)(1-\Phi(z))-\phi(z)(\phi(z)(1-\Phi(z))-\Phi(z)\phi(z))}{\Phi(z)^2(1-\Phi(z))^2}
+\end{aligned}
+$$
+
+And regrettably, while `R` has implemented $\phi$ and $\Phi$, it doesn't have
+a default $\phi'$ implementation. So we must compute it explicitly:
+
+$$
+\begin{aligned}
+\phi'(z)&=\frac{d}{dz} \frac{1}{\sqrt{2 \pi}}e^{-z^2/2}\\
+&=\frac{-z}{\sqrt{2 \pi}} e^{-z^2/2}
+\end{aligned}
+$$
+
+First we implement the formulae used to compute the $H$ and $J$ matrix for a given $x$ and $y$. 
+
+```{r math}
+# test values
+x <- matrix(c(1, 1, 32, 11), ncol = 1)
+y <- 1
+beta <- matrix(c(2.08022, -0.79950, -0.03482, -0.01145), ncol = 1)
+
+alpha_prime <- function(z){
+  Phi <- pnorm(z)
+  phi <- dnorm(z)
+  phi_prime <- -z/sqrt(2*pi)*exp(-(z^2)/2)
+  
+  numerator <- 
+    (phi_prime * Phi * (1-Phi)) - 
+    (phi * ((phi * (1-Phi)) - (phi * Phi)))
+  denominator <- (Phi^2) * ((1-Phi)^2)
+  
+  numerator / denominator
+}
+
+H <- function(x,y,beta){
+  stopifnot(all(dim(x)==dim(beta)))
+  stopifnot(length(y)==1)
+  
+  x_prime_beta <- {t(x) %*% beta}[1,1]
+  phi <- dnorm(x_prime_beta)
+  Phi <- pnorm(x_prime_beta)
+  
+  
+  first_exp = x %*% t(x) * (phi^2) / (Phi*(1-Phi))
+  second_exp = x %*% t(x) * (y - Phi) * alpha_prime(x_prime_beta)
+  
+  -first_exp + second_exp
+}
+
+J <- function(x,y,beta,correctly_specified = F){
+  stopifnot(all(dim(x)==dim(beta)))
+  stopifnot(length(y)==1)
+  
+  x_prime_beta <- {t(x) %*% beta}[1,1]
+  phi <- dnorm(x_prime_beta)
+  Phi <- pnorm(x_prime_beta)
+  
+  if (correctly_specified){
+    inner_exp <- (Phi)*(1-Phi)
+  } else{
+    inner_exp <- (y-Phi)^2
+  }
+  frac <- (phi/(Phi*(1-Phi)))^2
+  
+  x %*% t(x) * frac * inner_exp
+}
+
+# H(x, y, beta)
+# J(x, y, beta)
+# J(x, y, beta, correctly_specified = T)
+```
+Now we create functions to estimate standard errors from a dataset.
+
+```{r estimators}
+estimate_hat <- function(X, y, beta, estimator, ...) {
+
+  # Convert each row of X into a named column vector (matrix ncol = 1)
+  X_list <- apply(
+    X, 1,
+    function(m) {
+      mat <- matrix(m, ncol = 1)
+      rownames(mat) <- names(m)
+      mat
+    },
+    simplify = FALSE
+  )
+
+  # Evaluate estimator on each (x_i, y_i), forwarding extra args
+  hats <- mapply(
+    function(x_i, y_i) estimator(x_i, y_i, beta, ...),
+    X_list, y,
+    SIMPLIFY = FALSE
+  )
+
+  # Average (sum then divide)
+  Reduce("+", hats) / length(hats)
+}
+```
+
+Now we load the data and actually compute standard errors.
+
+```{r data-work}
+# explicitly make a column vector
+beta_hat <- matrix(c(2.08022, -0.79950, -0.03482, -0.01145), ncol = 1)
+
+data <- read.csv('mroz.csv')
+y <- data$part
+# one row per data point. effectively when we slice out a row, we already
+# get an x' (x transpose)
+X <- cbind(rep(1,nrow(data)), as.matrix(data[,c('kidslt6', 'age', 'nwifeinc')]))
+colnames(X)[1] <- "(Intercept)"
+
+H_hat <- estimate_hat(X, y, beta_hat, H)
+J_hat <- estimate_hat(X, y, beta_hat, J)
+J_hat_correctly_specified <- estimate_hat(X, y, beta_hat, J,
+                                          correctly_specified = T)
+
+sandwich <- solve(H_hat)%*%J_hat%*%solve(H_hat)
+estimated_variance <- sandwich/length(y)
+estimated_ses <- sqrt(diag(estimated_variance))
+
+estimated_variance_correctly_specified <- solve(J_hat)/length(y)
+estimated_ses_correctly_specified <- sqrt(diag(estimated_variance_correctly_specified))
+
+estimated_variance_alt <- solve(J_hat_correctly_specified)/length(y)
+estimated_ses_alt <- sqrt(diag(estimated_variance_alt))
+```
+
+```{r, echo=FALSE}
+cat(
+  "Sandwich QMLE SEs:",
+  capture.output(estimated_ses),
+  sep = "\n"
+)
+cat(
+  "Correct Specification SEs:",
+  capture.output(estimated_ses_correctly_specified),
+  sep = "\n"
+)
+cat(
+  "Completely Correct Specification SEs:",
+  capture.output(estimated_ses_alt),
+  sep = "\n"
+)
+```
+
+# Problem 3
+
+## Problem 3.a
+
+The data available is 
+
+$$
+\begin{aligned}
+y_{A1}&=\alpha_A \cdot1 + \alpha_B\cdot 0 +\beta_1 \cdot 1 + \beta_2\cdot 0+\tau\cdot 0 + \varepsilon\\
+y_{A2}&=\alpha_A \cdot1 + \alpha_B\cdot 0 +\beta_1 \cdot 0 + \beta_2\cdot 1+\tau\cdot 1 + \varepsilon\\
+y_{B1}&=\alpha_A \cdot0 + \alpha_B\cdot 1 +\beta_1 \cdot 0 + \beta_2\cdot 0+\tau\cdot 0 + \varepsilon\\
+y_{B2}&=\alpha_A \cdot0 + \alpha_B\cdot 1 +\beta_1 \cdot 0 + \beta_2\cdot 1+\tau\cdot 0 + \varepsilon\\
+\end{aligned}
+$$
+
+$$
+\begin{bmatrix}
+1 & 0 & 1 & 0 & 0 \\
+1 & 0 & 0 & 1 & 1 \\
+0 & 1 & 1 & 0 & 0 \\
+0 & 1 & 0 & 1 & 0\\
+\end{bmatrix} \begin{bmatrix} \alpha_A \\ \alpha_B \\ \beta_1 \\ \beta_2 \\ \tau\end{bmatrix}
+$$
+
+Clearly $X'X$ will not be invertible since we're trying to estimate more parameters
+than rows in the data. So with the data we have, we had no hope of identifying 
+the $\alpha$s separately from the $\beta$s
+
+In particular, column 1 plus column 2 minus column 3 equals
+column 4. So the fixed effects can't be estimated.
+
+But the problem is actually deeper than that. Identification requires that
+different values of the parameters produce different distributions of the data.
+I'll argue that two different sets of fixed effects parameters produce identical
+distributions of the data.
+
+Suppose that all of the individual fixed effects were larger by an additive factor
+$\eta$ and all of the time fixed effects were smaller by that same factor. Then 
+every observation has an individual and a time period, they experience a $+\eta$ 
+and a $-\eta$ which produces a net zero effect on that observation. This was actually
+a generic argument that doesn't require the 2-person 2-period setup we have here.
+This proves generally that they can't be jointly identified. Notice that if we
+force $\beta_1=0$, then there would be observation that would have a $-\eta$ but
+not a $+\eta$, so different values of the parameters produce different data.
+
+## Problem 3.b
+
+When $\beta_1=0$, we can rewrite the above data/matrix as:
+
+$$
+\begin{bmatrix}
+1 & 0 & 0 & 0 \\
+1 & 0 & 1 & 1 \\
+0 & 1 & 0 & 0 \\
+0 & 1 & 1 & 0\\
+\end{bmatrix} \begin{bmatrix} \alpha_A \\ \alpha_B  \\ \beta_2 \\ \tau\end{bmatrix}
+$$
+
+Desmos tells me:
+$$
+(X'X)^{-1}X'=\begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & 0 & 1 & 0 \\
+0 & 0 & -1 & 1 \\
+-1 & 1 & 1 & -1\\
+\end{bmatrix}
+$$
+
+So for an arbitrary $[y_{A1} \ y_{A2} \ y_{B1} \ y_{B2}]'$, the $\hat\tau$ is
+recovered from the inner product with the final row: 
+
+$$
+[-1 \ 1 \ 1 \ -1][y_{A1} \ y_{A2} \ y_{B1} \ y_{B2}]'=-y_{A1}+y_{A2} + y_{B1}-y_{B2}=(y_{A2}-y_{A1})-(y_{B2}-y_{B1})
+$$
+
+Which is exactly the DiD estimator.
