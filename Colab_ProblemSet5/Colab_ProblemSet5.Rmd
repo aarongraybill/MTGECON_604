@@ -1,0 +1,53 @@
+---
+title: "Problem Set 5"
+author: 
+  - John Cho^[Authors listed alphabetically and contributed equally to every question.]
+  - Aaron Graybill
+  - Thomas Li
+  - Blair Moore
+output: pdf_document
+header-includes:
+  - \usepackage{amsmath}
+---
+
+# Hamilton's Problems
+
+## Exercise 3.1
+
+## Exercise 3.2
+
+## Excercise 3.3
+
+## Excercise 11.5
+
+# The Permanent Income Model
+
+## 1. Finding the Autocovariances
+
+## 2. The Vector Process
+
+## 3. Simulation Exercise
+
+# The Kalman Filter
+
+## 1. Analytical Moments
+
+## 2. Conditional Expectations
+
+## 3. Conditional Likelihood
+
+## 4. State Space Representation
+
+## 5. Simulation
+
+## 6. Implementing the Kalman Filter
+
+## 7. Applying the Kalman Filter
+
+# Metropolis Hastings
+
+## 1. Numerical Maximization
+
+## 2. Generating M-H Draws
+
+## 3. Lots of Simulations
