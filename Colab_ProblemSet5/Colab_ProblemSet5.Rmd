@@ -10,6 +10,17 @@ header-includes:
   - \usepackage{amsmath}
 ---
 
+```{r}
+seed_string <- "Blair, Thomas, Aaron, John"
+seed_number <- 
+  seed_string |>  
+  rlang::hash() |> # hash the string to a hex number
+  substr(1, 8) |> # make the number smaller 
+  strtoi(base = 16) # convert to decimal
+
+set.seed(seed_number)
+```
+
 # Hamilton's Problems
 
 ## Exercise 3.1
@@ -32,15 +43,215 @@ header-includes:
 
 ## 1. Analytical Moments
 
+We are given the ARMA(1,1) process:
+
+$$
+y_t = \phi y_{t-1} + \varepsilon_t+\gamma \varepsilon_{t-1}
+$$
+
+In lag operator notation, we have:
+
+$$
+\begin{aligned}
+y_t &= \phi L y_{t} + \varepsilon_t+\gamma L \varepsilon_{t}\\
+(1-\phi L)y_t &= (1+\gamma L) \varepsilon_{t}
+\end{aligned}
+$$
+
+The multiplicative inverse of $(1-\phi L)$ is $(1+\phi L+\phi^2 L^2-\ldots)$, and 
+so we can alternately express the ARMA process as an MA($\infty$):
+
+$$
+\begin{aligned}
+(1+\phi L+\phi^2 L^2-\ldots)(1-\phi L)y_t &= (1+\phi L+\phi^2 L^2-\ldots)(1+\gamma L) \varepsilon_{t}\\
+y_t&=(1+\phi L+\phi^2 L^2-\ldots)(1+\gamma L) \varepsilon_{t}\\
+&=[(1+\phi L+\phi^2 L^2-\ldots) + (\gamma L+\gamma\phi L+\gamma\phi^2 L^2+\ldots)]\varepsilon_{t} \\
+&=[\underbrace{1}_{\psi_0}+\underbrace{\phi^0(\phi+\gamma)}_{\psi_1}L-\underbrace{\phi^1(\phi+\gamma)}_{\psi_2}L^2-\underbrace{\phi^2(\phi+\gamma)}_{\psi_3}L^3+\ldots]\varepsilon_{t}\\
+&=\psi(L)\varepsilon_t
+\end{aligned}
+$$
+
+Assuming at every point that each step is well defined.
+
+In this form, it is much easier to compute the various moments of the distribution.
+
+Namely we have:
+
+$$
+\begin{aligned}
+E[y_t]&=E\left[[1+\phi^0(\phi+\gamma)L+\phi^1(\phi+\gamma)L^2+\phi^2(\phi+\gamma)L^3-\ldots]\varepsilon_{t}\right]\\
+&=[1+\phi^0(\phi+\gamma)L+\phi^1(\phi+\gamma)L^2+\phi^2(\phi+\gamma)L^3-\ldots]E[\varepsilon_{t}]\\
+&=[1+\phi^0(\phi+\gamma)L+\phi^1(\phi+\gamma)L^2+\phi^2(\phi+\gamma)L^3-\ldots]0\\
+&= 0
+\end{aligned}
+$$
+
+The variance of any $MA(\infty)$ process is given by:
+
+$$
+\begin{aligned}
+\gamma_0&=\sigma^2\sum_{j=0}^\infty \psi_j^2 \\
+&=\sigma^2\left(\psi_0^2+\sum_{j=1}^\infty \psi_j^2\right) \\
+&=\sigma^2\left(1^2+\sum_{j=1}^\infty (\phi^{j-1}(\phi+\gamma))^2\right)\\
+&=\sigma^2\left(1+(\phi+\gamma))^2\sum_{j=1}^\infty {\phi^{j-1}}^2\right)\\
+&=\sigma^2\left(1+(\phi+\gamma))^2\sum_{j=0}^\infty {\phi^j}^2\right)\\
+&=\sigma^2\left(1+(\phi+\gamma))^2\sum_{j=0}^\infty {\phi^2}^j\right)\\
+&=\boxed{\sigma^2\left(1+(\phi+\gamma))^2\frac{1}{1-\phi^2}\right)}\\
+\end{aligned}
+$$
+
+requiring that $\phi^2<1\implies |\phi|<1$
+
+The $j$th autocovariance of the MA($\infty$) is given by:
+
+$$
+\begin{aligned}
+\gamma_j &= \sigma^2\sum_{k=0}^\infty\psi_k\psi_{j+k} \\
+&=\sigma^2\left(\psi_0\psi_j + \sum_{k=1}^\infty \psi_k\psi_{j+k} \right) \\
+&=\sigma^2\left(1\cdot \phi^{j-1}(\phi+\gamma) +\sum_{k=1}^\infty \phi^{k-1}(\phi+\gamma)\phi^{j+k-1}(\phi+\gamma)\right) \\
+&=\sigma^2\left(1\cdot \phi^{j-1}(\phi+\gamma) +\sum_{\kappa=0}^\infty \phi^{\kappa}(\phi+\gamma)\phi^{j+\kappa}(\phi+\gamma)\right)\\
+&=\sigma^2\left(1\cdot \phi^{j-1}(\phi+\gamma) +(\phi+\gamma)^2\sum_{\kappa=0}^\infty \phi^{\kappa}\phi^{j+\kappa}\right)\\
+&=\sigma^2\left(1\cdot \phi^{j-1}(\phi+\gamma) +(\phi+\gamma)^2\sum_{\kappa=0}^\infty \phi^{2\kappa}\phi^{j}\right)\\
+&=\sigma^2\left(1\cdot \phi^{j-1}(\phi+\gamma) +(\phi+\gamma)^2\phi^{j}\sum_{\kappa=0}^\infty \phi^{2\kappa}\right)\\
+&=\sigma^2\left(1\cdot \phi^{j-1}(\phi+\gamma) +(\phi+\gamma)^2\phi^{j}\frac{1}{1-\phi^2}\right)\\
+&=\sigma^2\phi^{j-1}(\phi+\gamma) \left(1 +(\phi+\gamma)\phi\frac{1}{1-\phi^2}\right)\\
+&=\sigma^2\phi^{j-1}(\phi+\gamma) \left(1 +(\phi+\gamma)\frac{\phi}{1-\phi^2}\right)\\
+&=\sigma^2\phi^{j-1}(\phi+\gamma) \left(\frac{{1-\phi^2}}{{1-\phi^2}} +\frac{\phi^2+\phi\gamma}{1-\phi^2}\right)\\
+&=\boxed{\sigma^2\phi^{j-1}(\phi+\gamma) \left(\frac{{1+\phi\gamma}}{{1-\phi^2}}\right)}
+\end{aligned}
+$$
+
+Truly a bizarre expression that leaves little room for intuition. However, the series
+convergence there also only required that $\phi^2<1$, so $|\phi|<1$ is still sufficient to
+ensure covariance stationarity.
+
 ## 2. Conditional Expectations
 
 ## 3. Conditional Likelihood
 
 ## 4. State Space Representation
 
+A state space representation is a system of vector equations of the form:
+
+$$
+\begin{aligned}
+y_t&=\mu+Az_t+H\eta_t\\
+z_t&=\Phi z_{t-1}+R\xi_t
+\end{aligned}
+$$
+
+Where $\eta_t\sim \mathcal{N}(0,I),\xi_t\sim\mathcal{N}(0,\Sigma)$. Letting $z_{t}=\begin{bmatrix} y_t & \varepsilon_t \end{bmatrix}'$ we can represent the observation equation as:
+
+$$
+y_t = \begin{bmatrix} 1 & 0 \end{bmatrix}\begin{bmatrix} y_t \\ \varepsilon_t\end{bmatrix}+0\eta_t
+$$
+
+The $\eta$ component will not be needed, so we can set $H=0$ . Here's a canonical
+way to represent the state equation that ensures dimensional conformability at every step.
+
+$$
+\begin{bmatrix} y_t \\ \varepsilon_t \end{bmatrix} =
+\begin{bmatrix} \phi&\gamma \\ 0&0
+\end{bmatrix}
+\begin{bmatrix} y_{t-1} \\ \varepsilon_{t-1} \\\end{bmatrix} +
+\begin{bmatrix}1&0 \\ 1&0\end{bmatrix} \xi_t
+$$
+
+Where $\xi_t$ is a 2-long vector distributed $\xi_t\sim\mathcal{N}(0,\sigma^2 I)$.
+You could also use a one dimensional $\xi_t$ and then just the first column of the
+matrix before $\xi_t$.
+
 ## 5. Simulation
 
+```{r}
+capT = 150
+# structural parameters
+phi = .9
+gamma = .1
+sigma_squared = 1
+
+# state space parameters
+dim_state <- 2
+Sigma = sigma_squared * diag(nrow = dim_state)
+R = matrix(c(1, 0, 
+             1, 0),
+           byrow = T, nrow = dim_state)
+Phi = matrix(c(gamma, phi,
+               0, 0),
+             byrow = T, nrow = dim_state)
+
+# Observation parameters
+dim_obs <- 1 #
+mu <- c(0)
+A <- matrix(c(1, 0), byrow = T, nrow = dim_obs, ncol = dim_state)
+H <- matrix(c(0), byrow = T, nrow = dim_obs)
+
+evolve_state <- function(z, Phi, R, Sigma){
+  # compute multivariate normal using linearity
+  xi = Sigma%*%rnorm(nrow(Sigma))
+  
+  (Phi %*% z) + R%*%xi
+}
+
+evolve_observations <- function(z, mu, A, H){
+  eta <- rnorm(nrow(H))
+  
+  mu + (A %*% z) + H%*%eta
+}
+
+z0 = c(0,0)
+simulate <- function(capT, z0, Phi, R, Sigma, mu, A, H){
+  # loop capT times, feeding the result of the last iteration into
+  # this this iteration
+  states <- purrr::accumulate(
+  1:capT,
+  ~ evolve_state(.x, Phi, R, Sigma),
+  .init = z0
+)
+  
+  # compute observation from latent state
+  observations <- lapply(states, function(z){
+    evolve_observations(z, mu, A, H)
+  })
+  
+  # return long matrices with one row per time step
+  states <- do.call(cbind, states) |> t()
+  observations = do.call(cbind, observations) |> t()
+  
+  
+  return(list(states = states, observations = observations))
+}
+
+sim_results <- simulate(capT, c(0,0), Phi, R, Sigma, mu, A, H)
+
+library(ggplot2)
+ggplot()+
+  geom_line(aes(x=0:(nrow(sim_results$observations)-1), 
+                y=sim_results$observations[,1]))+
+  labs(y = expression("y"[t]*""),
+       x = "t")
+```
+
 ## 6. Implementing the Kalman Filter
+
+```{r}
+predict_y <- function(z, mu, A){
+  mu + (A %*% z)
+}
+
+compute_v <- function(y, z, mu, A){
+ y - predict_y(z, mu, A)
+}
+
+v_posterior_variance <- function(P, A, H){
+  (A %*% P %*% t(A)) + H%*%t(H)
+}
+
+prediction_error_variance <- function(z, P, A){
+  E
+}
+
+```
 
 ## 7. Applying the Kalman Filter
 
