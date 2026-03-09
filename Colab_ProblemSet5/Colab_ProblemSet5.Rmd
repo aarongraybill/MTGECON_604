@@ -27,6 +27,8 @@ set.seed(seed_number)
 
 ## Exercise 3.2
 
+Testing to see if I know how to use Git.
+
 ## Excercise 3.3
 
 ## Excercise 11.5
