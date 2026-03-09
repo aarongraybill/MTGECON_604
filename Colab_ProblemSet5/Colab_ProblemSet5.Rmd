@@ -27,7 +27,73 @@ set.seed(seed_number)
 
 ## Exercise 3.2
 
-Testing to see if I know how to use Git.
+We can rewrite $Y_t$ in the form 
+$$\xi_t = \mathbf{F} \xi_{t - 1} + \eta_t.$$
+Then,
+$$\begin{aligned}
+\begin{bmatrix}
+y_t \\
+y_{t-1}
+\end{bmatrix} &= \begin{bmatrix}
+1.1 & -0.18 \\
+1 & 0
+\end{bmatrix} \begin{bmatrix}
+y_{t-1} \\
+y_{t-2}
+\end{bmatrix} + \begin{bmatrix}
+\varepsilon_t \\
+0
+\end{bmatrix}
+\end{aligned}$$
+
+We find the eigenvalues of $\mathbf{F}$ by solving
+$$\begin{aligned}
+\det \begin{pmatrix} 1.1 - \lambda & -0.18 \\ 1 &-\lambda\end{pmatrix} &=  0 \\
+-1.1 \lambda + \lambda^2 + 0.18 &= 0\\ 
+\lambda^2 - 1.1 \lambda + 0.18 &=  0 \\ 
+(\lambda - 0.9)(\lambda - 0.2) &=  0.
+\end{aligned}$$
+
+Therefore, the two eigenvalues are $\lambda_1 = 0.2$ and $\lambda_2 = 0.9$. Because 
+$$max_i |\lambda_i| < 1$$
+we know that this AR(2) process admits a covariance-stationary MA($\infty$) process.
+
+
+To calculate the mean and autocovariance, we proceed with the eigendecomposition of
+$\mathbf{F}$, which is:$$\begin{aligned}
+\mathbf{T}\mathbf{\Lambda}\mathbf{T}^{-1} &= \begin{pmatrix} 0.2 & 0.9 \\ 1 & 1 \end{pmatrix} \begin{pmatrix} 0.2 & 0 \\ 0 & 0.9 \end{pmatrix} \begin{pmatrix} -\frac{10}{7} & \frac{9}{7} \\ \frac{10}{7} & -\frac{2}{7} \end{pmatrix}
+\end{aligned}$$
+
+Then,
+$$\begin{aligned}
+F_{1,1}^j &= 0.2^2\left(- \frac{10}{7}\right) + 0.9^2 \left( \frac{10}{7}\right)\\
+&= \left(\frac{-2}{7}\right)0.2^j + \left(\frac{9}{7}\right)0.9^j.
+\end{aligned}$$
+
+If $\psi_j =  \left(-\frac{2}{7}\right)0.2^j + \left(\frac{9}{7}\right)0.9^j$, then
+$$ Y_t = \sum_{j = 0}^{\infty} \psi_j \epsilon_{t-j}.$$
+
+We can see that
+$$\mathbb{E}[Y_t] = 0.$$
+
+For the autocovariance, 
+$$\begin{aligned}
+\gamma_{j} &= \mathbb{E}[(Y_t - \mu)(Y_{t-k} - \mu)\\
+&= \mathbb{E}(Y_{t} Y_{t-k}) = \mathbb{E} \left[ \left( \sum_{j=0}^{\infty} \psi_{j} \varepsilon_{t-j} \right) \left( \sum_{l=0}^{\infty} \psi_{l} \varepsilon_{t-l} \right) \right] \\
+&= \mathbb{E} \left[ \sum_{n=0}^{\infty} \sum_{j=0}^{n} \left(\psi_{j}\varepsilon_{t-j}\right) \left(\psi_{n-j} \varepsilon_{t-(n-j)}\right) \right] \text{(by Cauchy product)}\\
+&= \sum_{n=0}^{\infty} \sum_{j=0}^{n} \psi_{j} \psi_{n-j} \mathbb{E}[\varepsilon_{t-j} \varepsilon_{t-n+j}] \\
+\end{aligned}$$
+
+We know that $\mathbb{E}[\varepsilon_{t-j} \varepsilon_{t - n + j}] = 1$ when the indexes are equal to each other $t- j = t - n + j$, which occurs when $n = 2j$. Suppose $n = 0$, then $j = 0$ and we have $\psi_0 \psi_0$. Suppose $n = 2$, then $j = 1$ and we have $\psi_1 \psi_1$, etc. 
+
+Thus, we can observe that the above expression simplifies to 
+$$\begin{aligned}
+\gamma_j &= \sum_{j=0}^{\infty} \psi_{j}^{2} \mathbf{1} \{j \text{ is even}\} \\
+&= \sum_{j=0}^{\infty} \left[ \left( -\frac{2}{7} \right) 0.2^{j} + \left( \frac{9}{7} \right) 0.9^{j} \right]^{2} \mathbf{1} \{j \text{ is even}\} \\
+\end{aligned}$$
+
+
+
 
 ## Excercise 3.3
 
