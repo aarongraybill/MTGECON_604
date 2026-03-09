@@ -96,11 +96,8 @@ $$\begin{aligned}
 
 
 ## Excercise 3.3
-
 ## Excercise 11.5
-
 # The Permanent Income Model
-
 ## 1. Finding the Autocovariances
 
 Conditional on the information available at time $t$, all of the future random 
@@ -335,9 +332,7 @@ convergence there also only required that $\phi^2<1$, so $|\phi|<1$ is still suf
 ensure covariance stationarity.
 
 ## 2. Conditional Expectations
-
 ## 3. Conditional Likelihood
-
 ## 4. State Space Representation
 
 A state space representation is a system of vector equations of the form:
@@ -463,11 +458,7 @@ prediction_error_variance <- function(z, P, A){
 ```
 
 ## 7. Applying the Kalman Filter
-
 # Metropolis Hastings
-
 ## 1. Numerical Maximization
-
 ## 2. Generating M-H Draws
-
 ## 3. Lots of Simulations
