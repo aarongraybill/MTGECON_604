@@ -103,9 +103,150 @@ $$\begin{aligned}
 
 ## 1. Finding the Autocovariances
 
+Conditional on the information available at time $t$, all of the future random 
+variables are mean zero, so the agent's 
+expected income in any period $j\geq 0$ will their current permanent component of
+income, $x_t$. The transitory shock includes an $\epsilon_t$ that moves current
+period income from its long run average. So $E_t[y_{t+j+1}]=x_t$. The time $t+1$
+expectations are themselves a random variable from the perspective of period $t$
+because they depend on the news revealed in period $t+1$. In particular, in period
+$t+1$, a new value $x_{t+1}$ will be revealed, recentering the agents expectations
+of all future periods. If $j=0$, then from period $t+1$'s perspective, $y_{t+1}$
+is observed with certainty. But all future $j\geq 1$ are centered at $x_{t+1}$.
+
+Noting that $x_{t+1}=x_t+\eta_{t+1}$ and $y_{t+1}=x_{t}+\eta_{t+1}+\varepsilon_{t+1}$, we see that:
+
+$$
+E_{t+1}[y_{t+j+1}]-E_t[y_{t+j+1}]=
+\begin{cases}
+x_{t}+\eta_{t+1}+\varepsilon_{t+1} - x_t & j=0 \\
+x_t+\eta_{t+1}-x_t & j \geq 1
+\end{cases}
+$$
+
+Which obviously simplifies to:
+
+$$
+E_{t+1}[y_{t+j+1}]-E_t[y_{t+j+1}]=\begin{cases}
+\eta_{t+1}+\varepsilon_{t+1}& j=0 \\
+\eta_{t+1} & j \geq 1
+\end{cases}
+$$
+With that in mind, we can conveniently express $\Delta c_{t+1}\equiv c_{t+1}-c_{t}$ as:
+
+$$
+\begin{aligned}
+\Delta c_{t+1}&=(1-\beta)\sum_{j=0}^\infty\beta^j\left( E_{t+1}[y_{t+j+1}]-E_t[y_{t+j+1}]\right)\\
+&=(1-\beta)\beta^0\left( E_{t+1}[y_{t+0+1}]-E_t[y_{t+0+1}]\right)+(1-\beta)\sum_{j=1}^\infty\beta^j\left( E_{t+1}[y_{t+j+1}]-E_t[y_{t+j+1}]\right)\\
+&=(1-\beta)\left( \eta_{t+1}+\varepsilon_{t+1}\right)+(1-\beta)\sum_{j=1}^\infty\beta^j\eta_{t+1}\\
+&=(1-\beta)\left(\varepsilon_{t+1}\right)+(1-\beta)\eta_{t+1}+(1-\beta)\sum_{j=1}^\infty\beta^j\eta_{t+1} \\
+&=(1-\beta)\left(\varepsilon_{t+1}\right)+(1-\beta)\sum_{j=0}^\infty\beta^j\eta_{t+1} \\
+&=(1-\beta)\left(\varepsilon_{t+1}\right)+\eta_{t+1}(1-\beta)\sum_{j=0}^\infty\beta^j \\
+&=(1-\beta)\left(\varepsilon_{t+1}\right)+\eta_{t+1}(1-\beta)\frac{1}{1-\beta} \\
+&=(1-\beta)\varepsilon_{t+1}+\eta_{t+1} \\
+\end{aligned}
+$$
+
+If we define $u_{t}=(1-\beta)\varepsilon_{t+1}+\eta_{t+1}\sim\mathcal{N}(0,(1-\beta)^2\sigma_\varepsilon^2+\sigma_\eta^2)$, then we can think of $\Delta c_{t}$ as white noise process with mean 0 and variance: $(1-\beta)^2\sigma_\varepsilon^2+\sigma_\eta^2)$.
+
+From this, it is clear to see that the IRFs and autocovariances for all $j\neq 0$
+will be zero. There is absolutely no information passed between periods (at least
+for the per-period change in consumption).
+
+If $j=0$, then we have already expressed the variance as $(1-\beta)^2\sigma_\varepsilon^2+\sigma_\eta^2)$ Clearly, these are increasing in the variances of the primitives. But interesting as the agent
+becomes more patient ($\beta\to 1$), the variance in consumption reduces to only variance
+in the permanent component (because people no longer respond to the transitory shocks.)
+
+And the IRFs are simply the partials with respect to $\varepsilon$ which is $(1-\beta)$
+and for $\eta$ which is $1$.
+
+Assuming $\beta\in (0,1)$ (people strictly discount the future), then the magnitude
+of a transitory shock on the change in consumption is less than the same sized shock
+to permanent income. The permanent IRFs are invariant to model parameters, whereas
+as individuals become more patient $\beta\to 1$, the IRF for the transitory shock
+approaches zero (little change to previous period consumption).
+
 ## 2. The Vector Process
 
+Noting that 
+
+$$
+\begin{aligned}
+\Delta y_{t+1}&=(x_{t+1}+\varepsilon_{t+1})-(x_{t}+\varepsilon_{t}) \\
+&=(x_t+\eta_{t+1}+\varepsilon_{t+1})-(x_{t}+\varepsilon_{t})\\
+&=\eta_{t+1}+\varepsilon_{t+1}-\varepsilon_{t}%\\
+%&=\eta_{t+1}+\varepsilon_{t+1}-\varepsilon_{t}+\beta\varepsilon_{t+1}-\beta\varepsilon_{t+1}\\
+%&=\eta_{t+1}+\varepsilon_{t+1}-\varepsilon_{t}+\beta\varepsilon_{t+1}-\beta\varepsilon_{t+1}\\
+%&=\underbrace{\eta_{t+1}+(1-\beta)\varepsilon_{t+1}}_{\Delta %c_{t+1}}-\varepsilon_{t}+\beta\varepsilon_{t+1}\\
+\end{aligned}
+$$
+
+Decrementing the indices by one period, we can see that:
+
+$$
+\begin{bmatrix}\Delta c_{t}\\ \Delta y_{t}\end{bmatrix}=\begin{bmatrix} (1-\beta)\varepsilon_{t}+\eta_{t} \\ \eta_{t}+\varepsilon_{t}-\varepsilon_{t-1} \end{bmatrix}
+$$
+
+From this form, it would be natural to represent using matrix notation:
+
+$$
+\mathbf{\Delta}_t = \mathbf{\Psi}_0\mathbf{u}_t+ \mathbf{\Psi}_1\mathbf{u}_{t-1}
+$$
+
+Where
+$$
+\mathbf{\Psi}_0=\begin{bmatrix}(1-\beta)\sigma_\varepsilon & \sigma_\eta \\ \sigma_\varepsilon & \sigma_\eta \end{bmatrix}, \mathbf{\Psi}_1=\begin{bmatrix}0 & 0 \\
+0 & -\sigma_{\varepsilon}\\ \end{bmatrix}
+$$
+
+and $\mathbf{u}_t$ is a vector of independent white noise with unit variance.
+
+Which is a rather simple vector moving average equation.
+
 ## 3. Simulation Exercise
+
+```{r}
+capT = 10e3
+beta = .99
+sigma_e = .05
+sigma_h = .05
+
+e_draws <- rnorm(capT)*sigma_e
+h_draws <- rnorm(capT)*sigma_h
+
+rand_mat <- cbind(e = e_draws, h = h_draws)
+v_mat <- matrix(nrow = nrow(rand_mat), ncol = 2)
+colnames(v_mat) <- c("Delta c","Delta y")
+
+for (i in 1:capT){
+  if (i == 1){
+    rand_last <- c(e = 0, h = 0)
+  }else{
+    rand_last <- rand_mat[i-1,]
+  }
+  
+  rand_cur <- rand_mat[i,]
+  
+  v_mat[i, 'Delta c'] <- (1-beta)*rand_cur['e']+rand_cur['h']
+  v_mat[i, 'Delta y'] <- rand_cur['h'] + rand_cur['e'] - rand_last['e']
+}
+
+library(ggplot2)
+ggplot()+
+  geom_point(aes(x=v_mat[,1], y = v_mat[,2], col = 1:capT), alpha = .2)+
+  labs(color = "Time",
+       x = "Delta c",
+       y = "Delta y")
+
+```
+
+```{r unrestricted-VAR}
+library(MTS)
+m2=VARMA(v_mat,p=0,q=1,include.mean=FALSE)
+m2$coef
+
+#matrix(c(1-beta, ))
+```
 
 # The Kalman Filter
 
