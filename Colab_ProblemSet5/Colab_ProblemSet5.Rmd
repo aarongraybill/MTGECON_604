@@ -556,6 +556,64 @@ convergence there also only required that $\phi^2<1$, so $|\phi|<1$ is still suf
 ensure covariance stationarity.
 
 ## 2. Conditional Expectations
+
+Note that if we could observe $y_0$ and $\varepsilon_0$, we can compute $\varepsilon_1$ exactly using
+the equation of motion with:
+
+$$
+\varepsilon_1 = y_1-\phi y_0-\gamma \varepsilon_0
+$$
+
+Then we could proceed inductively to compute all future $\varepsilon_\tau$ for
+$\tau\in \{1,\ldots,t\}$ using:
+
+$$
+\varepsilon_\tau = y_\tau-\phi y_{\tau-1}-\gamma \varepsilon_{\tau -1}
+$$
+
+So given the observed data $\mathcal{I}_t$, and some guesses about
+$\varepsilon_0$ and $y_0$, we can compute the exact history of $\varepsilon$s. We
+do not need to condition on the $\varepsilon$s, so long as we condition on the other three.
+
+Now consider the first time step after $t$, time $t+1$. Conditional on $\mathcal{I}_t$, 
+$\varepsilon_0$, and $y_0$ we can think of the conditional expectation of $y_{t+1}$.
+
+$$
+\begin{aligned}
+E[y_{t+1}|\mathcal{I}_t,y_0,\varepsilon_0]&=E[\phi y_t+\varepsilon_{t+1}+\gamma\varepsilon_t|\mathcal{I}_t,y_0,\varepsilon_0]\\
+&=E[\phi y_t|\mathcal{I}_t,y_0,\varepsilon_0]+E[\varepsilon_{t+1}|\mathcal{I}_t,y_0,\varepsilon_0]+E[\gamma\varepsilon_t|\mathcal{I}_t,y_0,\varepsilon_0]\\
+&=\phi y_t+E[\varepsilon_{t+1}|\mathcal{I}_t,y_0,\varepsilon_0]+\gamma\varepsilon_t\\
+&=\phi y_t+0+\gamma\varepsilon_t\\
+&=\phi y_t+\gamma\varepsilon_t\\
+\end{aligned}
+$$
+
+Where the middle expectation can be replaced with a 0 because $\varepsilon_{t+1}$
+is white noise.
+
+And then for the second step:
+
+$$
+\begin{aligned}
+E[y_{t+2}|\mathcal{I}_t,y_0,\varepsilon_0]&=E[\phi y_{t+1}+\varepsilon_{t+2}+\gamma\varepsilon_{t+1}|\mathcal{I}_t,y_0,\varepsilon_0]\\
+&=E[\phi y_{t+1}|\mathcal{I}_t,y_0,\varepsilon_0]+E[\varepsilon_{t+2}|\mathcal{I}_t,y_0,\varepsilon_0]+E[\gamma\varepsilon_{t+1}|\mathcal{I}_t,y_0,\varepsilon_0]\\
+&=E[\phi y_{t+1}|\mathcal{I}_t,y_0,\varepsilon_0]+0+0\\
+&=\phi E[y_{t+1}|\mathcal{I}_t,y_0,\varepsilon_0]+0+0\\
+&=\phi\left(\phi y_t+\gamma\varepsilon_t\right)
+\end{aligned}
+$$
+
+And for any stage $k$ steps after $t$ we see that:
+
+$$
+\begin{aligned}
+E[y_{t+k}|\mathcal{I}_t,y_0,\varepsilon_0]&=E[\phi y_{t+(k-1)}+\varepsilon_{t+k}+\gamma\varepsilon_{t+(k-1)}|\mathcal{I}_t,y_0,\varepsilon_0]\\
+&=E[\phi y_{t+(k-1)}|\mathcal{I}_t,y_0,\varepsilon_0]+E[\varepsilon_{t+k}|\mathcal{I}_t,y_0,\varepsilon_0]+E[\gamma\varepsilon_{t+(k-1)}|\mathcal{I}_t,y_0,\varepsilon_0]\\
+&=E[\phi y_{t+(k-1)}|\mathcal{I}_t,y_0,\varepsilon_0]+0+0\\
+&=\boxed{\phi^{k-1}\left(\phi y_t+\gamma\varepsilon_t\right)}
+\end{aligned}
+$$
+
 ## 3. Conditional Likelihood
 ## 4. State Space Representation
 
@@ -604,7 +662,7 @@ Sigma = sigma_squared * diag(nrow = dim_state)
 R = matrix(c(1, 0, 
              1, 0),
            byrow = T, nrow = dim_state)
-Phi = matrix(c(gamma, phi,
+Phi = matrix(c(phi, gamma,
                0, 0),
              byrow = T, nrow = dim_state)
 
@@ -616,7 +674,7 @@ H <- matrix(c(0), byrow = T, nrow = dim_obs)
 
 evolve_state <- function(z, Phi, R, Sigma){
   # compute multivariate normal using linearity
-  xi = Sigma%*%rnorm(nrow(Sigma))
+  xi = chol(Sigma)%*%rnorm(nrow(Sigma))
   
   (Phi %*% z) + R%*%xi
 }
@@ -658,6 +716,25 @@ ggplot()+
                 y=sim_results$observations[,1]))+
   labs(y = expression("y"[t]*""),
        x = "t")
+```
+
+```{r}
+y_list <- sim_results$observations[-1,1]
+compute_e <- function(y_list, y0 = 0, e0 = 0) {
+  n <- length(y_list)
+  e <- numeric(n)
+
+  for (t in seq_len(n)) {
+    ytm1 <- if (t == 1) y0 else y_list[t - 1]
+    etm1 <- if (t == 1) e0 else e[t - 1]
+    e[t] <- y_list[t] - phi * ytm1 - gamma * etm1
+  }
+
+  e
+}
+
+#compute_e(y_list)
+plot(sim_results$states[-1,2],compute_e(y_list))
 ```
 
 ## 6. Implementing the Kalman Filter
