@@ -192,13 +192,76 @@ $$
 
 Where
 $$
-\mathbf{\Psi}_0=\begin{bmatrix}(1-\beta)\sigma_\varepsilon & \sigma_\eta \\ \sigma_\varepsilon & \sigma_\eta \end{bmatrix}, \mathbf{\Psi}_1=\begin{bmatrix}0 & 0 \\
-0 & -\sigma_{\varepsilon}\\ \end{bmatrix}
+\mathbf{\Psi}_0=\begin{bmatrix}(1-\beta) &1\\ 1 & 1 \end{bmatrix}, \mathbf{\Psi}_1=\begin{bmatrix}0 & 0 \\
+-1 & 0 \\ \end{bmatrix},\mathbf{u}_t\sim WN\left(\mathbf{0},\begin{bmatrix}\sigma_\varepsilon^2 & 0\\ 0 & \sigma_\eta^2\end{bmatrix}\right)
 $$
 
-and $\mathbf{u}_t$ is a vector of independent white noise with unit variance.
+Which is a rather simple vector moving average equation, but it still suffers
+from an identification problem because it has 8 parameters including some on the
+contemporaneous shocks. One way to take care that is to redefine the contemporaneous
+shocks so that they're no longer orthogonal but there is no longer a $\mathbf{\Psi}_0$ matrix.
 
-Which is a rather simple vector moving average equation.
+Defining $\mathbf{e}_t\equiv\mathbf{\Psi}_0 \mathbf{u}_t$, linearity of the normal family
+shows that:
+
+$$
+\begin{aligned}
+\mathbf{e}_t&\sim WN\left(\mathbf{0},\begin{bmatrix}(1-\beta) &1\\ 1 & 1 \end{bmatrix}\begin{bmatrix}\sigma_\varepsilon^2 & 0\\ 0 & \sigma_\eta^2\end{bmatrix}\begin{bmatrix}(1-\beta) &1\\ 1 & 1 \end{bmatrix}'\right) \\ 
+&\sim WN\left(\mathbf{0},\begin{bmatrix}(1-\beta)\sigma_\varepsilon^2 &\sigma_\eta^2\\ \sigma_\varepsilon^2 & \sigma_\eta^2 \end{bmatrix}\begin{bmatrix}(1-\beta) &1\\ 1 & 1 \end{bmatrix}\right)\\
+&\sim WN\left(\mathbf{0},\begin{bmatrix}(1-\beta)^2\sigma_\varepsilon^2+\sigma_\eta^2 &(1-\beta)\sigma_\varepsilon^2+\sigma_\eta^2\\ (1-\beta)\sigma_\varepsilon^2+\sigma_\eta^2 & \sigma_\varepsilon^2+\sigma_\eta^2 \end{bmatrix}\right)
+\end{aligned}
+$$
+
+and that we solve for last period's shocks:
+
+$$
+\mathbf{e}_{t-1}=\mathbf{\Psi}_0\mathbf{u}_{t-1}\implies \mathbf{u}_{t-1}=\mathbf{\Psi}_0^{-1}\mathbf{e}_{t-1}
+$$
+
+With that we can re-express our process as:
+
+$$
+\mathbf{\Delta}_t = \mathbf{e}_t+ \mathbf{\Psi}_1\mathbf{\Psi}_0^{-1}\mathbf{e}_{t-1}
+$$
+
+Noting that using the familiar $2\times 2$ inverse identity, we see that:
+
+$$
+\begin{aligned}
+\mathbf{\Psi}_0^{-1}&=\frac{1}{\det(\mathbf{\Psi}_0)}\begin{bmatrix}1 & -1\\ -1 & (1-\beta)\end{bmatrix} \\
+&=\frac{1}{(1-\beta)\cdot1-1\cdot1}\begin{bmatrix}1 & -1\\ -1 & (1-\beta)\end{bmatrix}\\
+&=\frac{1}{-\beta}\begin{bmatrix}1 & -1\\ -1 & (1-\beta)\end{bmatrix}\\
+\end{aligned}
+$$
+
+And combining $\mathbf{\Psi}_1\mathbf{\Psi}_0^{-1}$ into a single matrix $\tilde{\mathbf{\Psi}}_1$, we see that:
+
+$$
+\begin{aligned}
+\tilde{\mathbf{\Psi}}_1&=\mathbf{\Psi}_1\mathbf{\Psi}_0^{-1}\\
+&=\begin{bmatrix}0 & 0 \\
+-1 & 0 \\ \end{bmatrix}\frac{1}{-\beta}\begin{bmatrix}1 & -1\\ -1 & (1-\beta)\end{bmatrix}\\
+&=\frac{1}{-\beta}\begin{bmatrix}0 & 0 \\
+-1 & 0 \\ \end{bmatrix}\begin{bmatrix}1 & -1\\ -1 & (1-\beta)\end{bmatrix}\\
+&=\frac{1}{-\beta}\begin{bmatrix}0 & 0 \\
+-1 & 1 \\ \end{bmatrix}\\
+&=\begin{bmatrix}0 & 0 \\
+\frac{1}{\beta} & \frac{1}{-\beta} \\ \end{bmatrix}\\
+\end{aligned}
+$$
+
+So the final form for the vector moving average process is:
+
+$$
+\begin{gathered}
+\mathbf{\Delta}_t = \mathbf{e}_t+ \tilde{\mathbf{\Psi}}_1\mathbf{e}_{t-1}\\
+s.t. \\
+\tilde{\mathbf{\Psi}}_1=\begin{bmatrix}0 & 0 \\
+\frac{1}{\beta} & \frac{1}{-\beta} \\ \end{bmatrix}, \mathbf{e}_t\sim WN\left(\mathbf{0},\begin{bmatrix}(1-\beta)^2\sigma_\varepsilon^2+\sigma_\eta^2 &(1-\beta)\sigma_\varepsilon^2+\sigma_\eta^2\\ (1-\beta)\sigma_\varepsilon^2+\sigma_\eta^2 & \sigma_\varepsilon^2+\sigma_\eta^2 \end{bmatrix}\right)
+\end{gathered}
+$$
+
+
 
 ## 3. Simulation Exercise
 
@@ -240,9 +303,22 @@ ggplot()+
 ```{r unrestricted-VAR}
 library(MTS)
 m2=VARMA(v_mat,p=0,q=1,include.mean=FALSE)
-m2$coef
 
-#matrix(c(1-beta, ))
+coef_target <- matrix(c(0, 0, 1/beta, -1/beta), nrow=2, byrow = T)
+
+
+se_target <- matrix(c(
+  (((1-beta)^2)*(sigma_e^2))+(sigma_h^2), ((1-beta)*(sigma_e^2))+(sigma_h^2),
+  ((1-beta)*(sigma_e^2))+(sigma_h^2), (sigma_e^2)+(sigma_h^2)
+  ), byrow = T, nrow = 2)
+```
+
+```{r, echo = F}
+message("Pct Error in Coefs ")
+((coef_target/m2$coef)-1)*100
+
+message("Pct Error in SEs ")
+((se_target/m2$secoef)-1)*100
 ```
 
 # The Kalman Filter
