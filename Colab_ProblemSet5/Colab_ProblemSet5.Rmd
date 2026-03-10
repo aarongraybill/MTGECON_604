@@ -5,17 +5,19 @@ author:
   - Aaron Graybill
   - Thomas Li
   - Blair Moore
+  - Angie Wang
+  - Roshie Xing
 output: pdf_document
 header-includes:
   - \usepackage{amsmath}
 ---
 
 ```{r}
-seed_string <- "Blair, Thomas, Aaron, John"
+seed_string <- "Roshie, Angie, Blair, Thomas, Aaron, John"
 seed_number <- 
   seed_string |>  
   rlang::hash() |> # hash the string to a hex number
-  substr(1, 8) |> # make the number smaller 
+  substr(1, 7) |> # make the number smaller 
   strtoi(base = 16) # convert to decimal
 
 set.seed(seed_number)
@@ -265,6 +267,10 @@ $$
 
 ## 3. Simulation Exercise
 
+The code and results below show that even after 10,000 simulations the model
+fails to converge to parameters given above. This is likely because the $\tilde{\mathbf{\Psi}}_1$
+matrix is singular which makes it hard to identify all of the relevant parameters.
+
 ```{r}
 capT = 10e3
 beta = .99
@@ -307,7 +313,7 @@ m2=VARMA(v_mat,p=0,q=1,include.mean=FALSE)
 coef_target <- matrix(c(0, 0, 1/beta, -1/beta), nrow=2, byrow = T)
 
 
-se_target <- matrix(c(
+sigma_target <- matrix(c(
   (((1-beta)^2)*(sigma_e^2))+(sigma_h^2), ((1-beta)*(sigma_e^2))+(sigma_h^2),
   ((1-beta)*(sigma_e^2))+(sigma_h^2), (sigma_e^2)+(sigma_h^2)
   ), byrow = T, nrow = 2)
@@ -317,8 +323,8 @@ se_target <- matrix(c(
 message("Pct Error in Coefs ")
 ((coef_target/m2$coef)-1)*100
 
-message("Pct Error in SEs ")
-((se_target/m2$secoef)-1)*100
+message("Pct Error in Sigma Matrix ")
+((sigma_target/m2$Sigma)-1)*100
 ```
 
 # The Kalman Filter
