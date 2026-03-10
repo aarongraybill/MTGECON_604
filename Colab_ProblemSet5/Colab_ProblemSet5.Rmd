@@ -26,10 +26,73 @@ set.seed(seed_number)
 # Hamilton's Problems
 
 ## Exercise 3.1
+Is the following MA(2) process covariance-stationary? If so, calculate its autocovariances.
+$$Y_t=(1+2.4L+0.8L^2)\varepsilon_t$$
+$$\mathbb{E}[\varepsilon_t \varepsilon_{\tau}]=
+\begin{cases}
+1 & \text{for }t=\tau \\
+0 & \text{otherwise}
+\end{cases}$$
+
+**Solution:**
+We check the conditions for stationarity. First, we take $\varepsilon_t \sim WN(0, 1)$.
+$$
+\begin{aligned}
+\mathbb{E}[Y_t] &= \mathbb{E}[\varepsilon_t+2.4\varepsilon_{t-1}+0.8\varepsilon_{t-2}] \\
+&= \mathbb{E}[\varepsilon_t]+2.4\mathbb{E}[\varepsilon_{t-1}]+0.8\mathbb{E}[\varepsilon_{t-2}] \\
+&=0 \quad \forall t
+\end{aligned}
+$$
+by virtue of $\varepsilon_t$ being a white noise distribution centered at 0. Next, we check that the variance of this process is finite for all $t$.
+$$
+\begin{aligned}
+\mathbb{V}(Y_t) &= \mathbb{V}(\varepsilon_t+2.4\varepsilon_{t-1}+0.8\varepsilon_{t-2}) \\
+&= \mathbb{V}(\varepsilon_t)+2.4^2\mathbb{V}(\varepsilon_{t-1})+0.8^2\mathbb{V}(\varepsilon_{t-2}) \\
+&= 1+2.4^2+0.8^2=7.4 < \infty \quad \forall t,
+\end{aligned}
+$$
+where we use the fact that the covariance of $\varepsilon_t$ and any $\varepsilon_{\tau}$, $\tau \neq t$ is 0, and that $\varepsilon_t$ has variance of 1 (for simplicity, it could be any finite $\sigma^2$).
+
+Finally, we check that the covariance between $Y_t$ and some arbitrary $Y_{t-j}$ is dependent only on the size of the gap $j$.
+$$
+\begin{aligned}
+\mathbb{C}\text{ov}(Y_t, Y_{t-j}) &= \mathbb{E}[Y_tY_{t-j}]-\mathbb{E}[Y_t]\mathbb{E}[Y_{t-j}] \\
+&= \mathbb{E}[Y_tY_{t-j}]-0.
+\end{aligned}
+$$
+
+* $j=0$: $\mathbb{C}\text{ov}(Y_t, Y_t)=\mathbb{V}(Y_t)=7.4$ 
+* $j=1$: $\mathbb{E}[Y_tY_{t-1}]=\mathbb{E}[(\varepsilon_t+2.4\varepsilon_{t-1}+0.8\varepsilon_{t-2})(\varepsilon_{t-1}+2.4\varepsilon_{t-2}+0.8\varepsilon_{t-3})]$. Using linearity of expectations and the fact that $\mathbb{E}[\varepsilon_t\varepsilon_{\tau}]=0$ for $t \neq \tau$, this simplifies to $2.4\mathbb{E}[\varepsilon_{t-1}^2]+2.4(0.8)\mathbb{E}[\varepsilon_{t-2}^2]=4.32,$ independent of $t$.
+* $j=2$: $\mathbb{E}[Y_tY_{t-2}]=\mathbb{E}[(\varepsilon_t+2.4\varepsilon_{t-1}+0.8\varepsilon_{t-2})(\varepsilon_{t-2}+2.4\varepsilon_{t-3}+0.8\varepsilon_{t-4})]$. Again, we use linearity of expectations and see that the only expectation that isn't 0 is the term $\mathbb{E}[\varepsilon_{t-2}^2]$; $\mathbb{E}[Y_tY_{t-2}]=0.8\mathbb{E}[\varepsilon_{t-2}^2]=0.8$, independent of $t$.
+* $j > 2$: $\mathbb{C}\text{ov}(Y_t, Y_{t-j}) = 0$ in this case, as there will be no overlapping $\varepsilon$ terms in the expectation of the product calculation. There is only the situation where $\mathbb{E}[\varepsilon_t\varepsilon_{\tau}], t \neq \tau$.
+Thus, $\mathbb{C}\text{ov}(Y_t, Y_{t-j})=\gamma_j$, independent of $t$. The MA(2) process $Y_t$ satisfies all three conditions for covariance-stationarity. As an aside, this process is not invertible: the roots of the lag polynomial $P(z)=0.8z^2+2.4z+1$ are $-0.5, -2.5$, which are not both outside of the unit circle. 
+
+The auto-covariances are as described above (again, normalizing $\varepsilon_t$ to have variance of 1:
+$$
+\mathbb{C}\text{ov}(Y_t, Y_{t-j})=
+\begin{cases}
+7.4 & \quad \text{if }j=0 \\
+4.32 & \quad \text{if }j=1 \\
+0.8 & \quad \text{if }j=2\\
+0 & \quad \text{else}.
+\end{cases}
+$$
 
 ## Exercise 3.2
+Is the following AR(2) process covariance-stationary? If so, calculate its autocovariances.
+$$
+\begin{aligned}
+(1-1.1L+0.18L^2)Y_t &= \varepsilon_t \\
+\mathbb{E}[\varepsilon_t \varepsilon_{\tau}]= 
+\begin{cases}
+1 \quad \text{for }t=\tau \\
+0 \quad \text{otherwise}.
+\end{cases}
+\end{aligned}
+$$
+**Solution:**
 
-We can rewrite $Y_t$ in the form 
+We can rewrite $Y_t$ in the form
 $$\xi_t = \mathbf{F} \xi_{t - 1} + \eta_t.$$
 Then,
 $$\begin{aligned}
@@ -57,7 +120,7 @@ $$\begin{aligned}
 \end{aligned}$$
 
 Therefore, the two eigenvalues are $\lambda_1 = 0.2$ and $\lambda_2 = 0.9$. Because 
-$$max_i |\lambda_i| < 1$$
+$$\max_i |\lambda_i| < 1$$
 we know that this AR(2) process admits a covariance-stationary MA($\infty$) process.
 
 
@@ -95,10 +158,89 @@ $$\begin{aligned}
 \end{aligned}$$
 
 
+## Exercise 3.3
+A covariance-stationary $AR(p)$ process 
+$$
+(1-\phi_1L-\phi_2L^2-...-\phi_pL^p)(Y_t-\mu)=\varepsilon_t
+$$
+has an $MA(\infty)$ representation given by 
+$$
+\begin{aligned}
+(Y_t-\mu) &= \psi(L)\varepsilon_t, \text{ with} \\
+\psi(L) &= 1/[1-\phi_1L-\phi_2L^2-...-\phi_pL^p] \text{ or} \\
+[1-\phi_1L-\phi_2L^2-...-\phi_L^p]&[\psi_0+\psi_1L+\psi_2L^2+...]=1.
+\end{aligned}
+$$
+In order for this equation to be true, the implied coefficient on $L^0$ must be unit and the coefficients on $L^1, L^2, ...$ must be zero. Write out these conditions explicitly and show that they imply a recursive algorithm for generating the $MA(\infty)$ weights $\psi_0, \psi_1, ...$. Show that this recursion is algebraically equivalent to setting $\psi_j$ equal to the $(1,1)$ element of the matrix \textbf{F} raised to the $j$th power.
 
+**Solution:**
 
-## Excercise 3.3
-## Excercise 11.5
+If we expand the product and make explicit the conditions for the $MA(\infty)$ representation to hold true, we obtain a series of equations on the respective lag terms:
+$$
+\begin{aligned}
+L^0&: \psi_0=1 \\
+L^1&: \psi_1-\psi_0\phi_1 = 0 \Rightarrow \psi_1 = \phi_1 \\
+L^2&: \psi_2-\phi_1\psi_1-\phi_2\psi_0 = 0 \Rightarrow \psi_2 = \phi_2 + \phi_1^2 \\
+... \\
+L^j&: \psi_j = \phi_1 \psi_{j-1}+\phi_2\psi_{j-2}+...+\phi_p\psi_{j-p} \\
+& \psi_j= \sum_{k=1}^p \phi_k \psi_{j-k}.
+\end{aligned}
+$$
+As in lecture, we can define the \textbf{F} matrix as
+$$
+\begin{bmatrix}
+\phi_1 & \phi_2 & ... & \phi_{p-1} & \phi_p \\
+1 & 0 & ... & 0 & 0 \\
+0 & 1 & ... & 0 & 0 \\
+\vdots & \vdots & \vdots & \vdots & \vdots \\
+0 & 0 & ... & 1 & 0,
+\end{bmatrix}
+$$
+where the first row is $\phi_1$ through $\phi_p$, the other elements of the final column are 0's, and the remainder of the matrix is $I_{p-1}$ (the identity).
+
+Then, $F_{11}=\phi_1=\psi_1$, by construction. The (1,1) element of $F^2$ is $\phi_1^2+\phi_2=\phi_1\psi_1+\phi_2=\psi_2$, as desired. The (1,1) element of $F^p$ is $\phi_1\psi_{p-1}+\phi_2\psi_{p-2}+...+\phi_p\psi_0$, which from the $MA(\infty)$ conditions we have shown to be $\psi_p$. In particular, the first two elements of the first row of the product $F^{j-1}$ are constructed as follows: $[\psi_{j-1} , \phi_2\psi_{j-2}+\phi_3\psi_{j-3} , ...]$, which when taking the dot product with $F$ leaves $\sum_{k=1}^p \phi_k\psi_{j-k}=\psi_j$ as the (1,1) element. Thus, the recursion algorithm is equivalent to setting $\psi_j$ to be the (1,1) element of $F^j$.
+
+## Exercise 11.5
+Consider the following bivariate VAR:
+$$
+\begin{aligned}
+y_{1,t} &= 0.3y_{1,t-1}+0.8y_{2,t-1}+\varepsilon_{1,t} \\
+y_{2,t}&= 0.9y_{1,t-1}+0.4y_{2,t-1}+\varepsilon_{2,t}
+\end{aligned}
+$$
+with $\mathbb{E}[\varepsilon_{1,t}\varepsilon_{1,\tau}]=1$ for $t=\tau$ and 0 otherwise, $\mathbb{E}[\varepsilon_{2,t}\varepsilon_{2,\tau}]=2$ for $t=\tau$ and 0 otherwise, and $\mathbb{E}[\varepsilon_{1,t}\varepsilon_{2,\tau}]=0$ for all $t,\tau$.
+
+(a) Is this system covariance-stationary?
+(b) Calculate $\mathbf{\Psi}_s=\frac{\partial y_{t+s}}{\partial\varepsilon_t'}$ for $s=0,1,2$. What is the limit as $s \rightarrow \infty$?
+(c) Calculate the fraction of the MSe of the two-period-ahead forecast error for variable 1,
+$$
+\mathbb{E}[y_{1,t+2}-\mathbb{E}[y_{1,t+2}|y_t,y_{t-1},...]]^2,
+$$
+that is due to $\varepsilon_{1,t+1}$ and $\varepsilon_{1,t+2}$.
+
+**Solution:**
+
+(a) This system is not covariance-stationary. We can rewrite it in vector form:
+$$
+\begin{bmatrix}
+Y_{1,t} \\ Y_{2,t} 
+\end{bmatrix}
+= 
+\begin{bmatrix}
+0.3 & 0.8 \\ 0.9 & 0.4
+\end{bmatrix}
+\begin{bmatrix}
+Y_{1,t-1} \\
+Y_{2,t-1}
+\end{bmatrix} +
+\begin{bmatrix}
+\varepsilon_{1,t} \\
+\varepsilon_{2,t}
+\end{bmatrix}.
+$$
+The eigenvalues of the $\pi$ matrix (coefficient on $Y_{t-1}$) are found by setting the determinant of $\pi-\lambda I$ to be 0; we get $(0.3-\lambda)(0.4-\lambda)-0.8*0.9$, yielding the eigenvalues of 1.2 and -0.5. One eigenvalue of $\pi$ (the companion form) is outisde of the unit circle, meaning that this bivariate VAR process is not covariance-stationary.
+
+(b)
 # The Permanent Income Model
 ## 1. Finding the Autocovariances
 
