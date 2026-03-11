@@ -752,9 +752,9 @@ simulate <- function(capT, z0, Phi, R, Sigma, mu, A, H){
   })
   
   # return long matrices with one row per time step
-  states <- do.call(cbind, states) |> t()
-  observations = do.call(cbind, observations) |> t()
-  
+  # remove the time zero information
+  states <- do.call(cbind, states) |> t() |> tail.matrix(n = capT)
+  observations = do.call(cbind, observations) |> t() |> tail.matrix(n = capT)
   
   return(list(states = states, observations = observations))
 }
@@ -763,14 +763,14 @@ sim_results <- simulate(capT, c(0,0), Phi, R, Sigma, mu, A, H)
 
 library(ggplot2)
 ggplot()+
-  geom_line(aes(x=0:(nrow(sim_results$observations)-1), 
+  geom_line(aes(x=1:nrow(sim_results$observations), 
                 y=sim_results$observations[,1]))+
   labs(y = expression("y"[t]*""),
        x = "t")
 ```
 
 ```{r}
-y_list <- sim_results$observations[-1,1]
+y_list <- sim_results$observations[,1]
 compute_e <- function(y_list, y0 = 0, e0 = 0) {
   n <- length(y_list)
   e <- numeric(n)
@@ -785,28 +785,95 @@ compute_e <- function(y_list, y0 = 0, e0 = 0) {
 }
 
 #compute_e(y_list)
-plot(sim_results$states[-1,2],compute_e(y_list))
+plot(sim_results$states[,2],compute_e(y_list))
 ```
 
 ## 6. Implementing the Kalman Filter
 
 ```{r}
-predict_y <- function(z, mu, A){
-  mu + (A %*% z)
+# NOTATION NOTE 
+# a variable x_t_tm1
+# is x_{t|t-1} in latex
+# this is used for both ys and Ps
+
+# functions that advance our guesses from time t-1 forward to t
+compute_z_t_tm1 <- function(z_t_t, Phi){
+  Phi %*% z_t_t
 }
 
-compute_v <- function(y, z, mu, A){
- y - predict_y(z, mu, A)
+compute_P_t_tm1 <- function(P_t_t, Phi, R, Sigma){
+  (Phi%*%P_t_t%*%t(Phi)) + (R%*%Sigma%*%t(R))
 }
 
-v_posterior_variance <- function(P, A, H){
-  (A %*% P %*% t(A)) + H%*%t(H)
+# functions that compute things about the prediction error and its variance
+compute_v_t <- function(y_t, z_t_tm1, mu, A){
+ y_t - (mu) - (A %*% z_t_tm1)
 }
 
-prediction_error_variance <- function(z, P, A){
-  E
+v_outer <- function(P_t_tm1, A, H){
+  (A %*% P_t_tm1 %*% t(A)) + (H%*%t(H))
 }
 
+# functions that update our guess of the current state given current information
+compute_z_t_t <- function(z_t_tm1, P_t_tm1, v_t, A, H){
+  big_inverse <- solve(v_outer(P_t_tm1, A, H))
+  z_t_tm1 + (P_t_tm1%*%t(A)%*%big_inverse%*%v_t)
+}
+
+compute_P_t_t <- function(P_t_tm1, A, H){
+  big_inverse <- solve(v_outer(P_t_tm1, A, H))
+  P_t_tm1 - (P_t_tm1%*%t(A)%*%big_inverse%*%A%*%t(P_t_tm1))
+}
+
+
+kalman_filter <- function(obs_mat, z0, P0, mu, A, H, Phi, R){
+  # the obs_mat is a long matrix to hold the vectors of observations
+  # an observation y is a column vector, so we'll need to be careful to transpose
+  # it after we slice out an observation
+  
+  
+  # define a long matrix to hold the vectors of states over time
+  # a state is a column vector, so when working with it, we'll need to be 
+  # careful about transposing
+  state_mat <- matrix(nrow = nrow(obs_mat), ncol = ncol(Phi))
+  
+  # start to build new guesses of the state based on the last iteration
+  for (i in 1:nrow(obs_mat)){
+    
+    # in every step we need to use last period's state z and P matrix
+    # to compute this period's state, but in the first period 
+    if (i == 1){
+      # base case use the supposition on z0
+      z_t_t <- z0 |> matrix(ncol = 1)
+      P_t_t <- P0
+    }
+    
+    # move last period's "new" estimates to be old
+    z_t_tm1 <- z_t_t
+    P_t_tm1 <- P_t_t
+    print(z_t_tm1)
+    print(P_t_tm1)
+    
+    
+    # get prediction error
+    y_t <- obs_mat[i,] |> t()
+    v_t <- compute_v_t(y_t, z_t_tm1, mu, A)
+    
+    # estimate current state using errors:
+    z_t_t <- compute_z_t_t(z_t_tm1, P_t_tm1, v_t, A, H)
+    P_t_t <- compute_P_t_t(P_t_tm1, A, H)
+    state_mat[i,] <- t(z_t_t)
+  }
+  
+  return(state_mat)
+}
+```
+
+```{r}
+obs_mat <- sim_results$observations
+z0 <- c(0,0)
+P0 <- diag(nrow = 2)
+#kalman_filter(obs_mat, z0, P0, mu, A, H, Phi, R)
 ```
 
 ## 7. Applying the Kalman Filter
