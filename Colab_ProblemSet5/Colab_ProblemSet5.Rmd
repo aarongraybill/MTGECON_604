@@ -238,9 +238,76 @@ Y_{2,t-1}
 \varepsilon_{2,t}
 \end{bmatrix}.
 $$
-The eigenvalues of the $\pi$ matrix (coefficient on $Y_{t-1}$) are found by setting the determinant of $\pi-\lambda I$ to be 0; we get $(0.3-\lambda)(0.4-\lambda)-0.8*0.9$, yielding the eigenvalues of 1.2 and -0.5. One eigenvalue of $\pi$ (the companion form) is outisde of the unit circle, meaning that this bivariate VAR process is not covariance-stationary.
+The eigenvalues of the $\Pi$ matrix (coefficient on $Y_{t-1}$) are found by setting the determinant of $\Pi-\lambda I$ to be 0; we get $(0.3-\lambda)(0.4-\lambda)-0.8*0.9$, yielding the eigenvalues of 1.2 and -0.5. One eigenvalue of $\pi$ (the companion form) is outside of the unit circle, meaning that this bivariate VAR process is not covariance-stationary.
 
-(b)
+(b) We consider $\Psi_s=\frac{\partial y_{t+s}}{\partial \varepsilon_t'}$ for various values of $s$.
+
+* When $s=0$: $\Psi_0=\frac{\partial y_{t}}{\partial \varepsilon_t'}$.
+
+$$
+\begin{aligned}
+\frac{\partial y_{1,t}}{\partial \varepsilon_{1,t}} &= 1 \quad \frac{\partial y_{1,t}}{\partial \varepsilon_{2,t}} &= 0\\
+\frac{\partial y_{2,t}}{\partial \varepsilon_{1,t}} &= 0 \quad \frac{\partial y_{2,t}}{\partial \varepsilon_{2,t}} &= 1 \\
+\Psi_0 &= 
+\begin{bmatrix}
+1 & 0 \\ 0 & 1 
+\end{bmatrix}
+\end{aligned}
+$$
+
+* When $s=1$: $\Psi_1=\frac{\partial y_{t+1}}{\partial \varepsilon_t'}$.
+
+$$
+\begin{aligned}
+y_{t+1} &= \Pi y_t + \varepsilon_{t+1} \\
+y_t &= \Pi y_{t-1} + \varepsilon_t \Rightarrow y_{t+1} = \Pi[\Pi y_{t-1}+\varepsilon_t]+\varepsilon_{t+1} \\
+\frac{\partial y_{t+1}}{\partial \varepsilon_t'} &= \Pi = \begin{bmatrix} 0.3 & 0.8 \\ 0.9 & 0.4 \end{bmatrix}
+\end{aligned}
+$$
+* When $s=2$: $\Psi_2=\frac{\partial y_{t+2}}{\partial \varepsilon_t'}$. We can apply a similar recursion to find the proper coefficient on on $\varepsilon_t$ and show that
+
+$$
+\begin{aligned}
+y_{t+1} &= \Pi[\Pi[\Pi y_{t-1}+\varepsilon_{t}]+\varepsilon_{t+1}]+\varepsilon_{t+2} \\
+\frac{\partial y_{t+2}}{\partial \varepsilon_t'} &= \Pi^2=\begin{bmatrix}0.81 & 0.56 \\ 0.63 & 0.88 \end{bmatrix}
+\end{aligned}
+$$
+* When $s \rightarrow \infty$, the recursive pattern says that $\Psi_s = \lim_{s \rightarrow \infty} \Pi^s$. We can simplify the term using the spectral decomposition, as $\Pi$ has a full set of linearly independent eigenvectors. Below, $X$ is the matrix whose columns are the eigenvectors of $\Pi$, and $\Lambda$ is the diagonal matrix of $\Pi$'s eigenvalues. We can immediately see that this term will diverge as $s \rightarrow \infty$, as $1.2 > 1$---shocks grow exponentially rather than dying out. So, this bivariate VAR process is explosive *and* not covariance-stationary
+
+$$
+\begin{aligned}
+\Pi^s &= X \Lambda^s X^{-1}
+\end{aligned}
+$$
+
+(c) To determine the two-period ahead forecast error for $y_1$, we can first recursively substitute to simplify the inner expectation term
+
+$$
+\begin{aligned}
+\mathbb{E}_t[y_{1,t+2}|y_t, y_{t-1},...] &= \mathbb{E}_t[0.3y_{1,t+1}+0.8y_{2,t+1}+\varepsilon_{1,t+2}|y_t, y_{t-1},...] \\
+&= \mathbb{E}[0.3(0.3y_{1,t}+0.8y_{2,t}+\varepsilon_{1, t+1})+0.8(0.9y_{1,t}+0.4y_{2,t}+\varepsilon_{2,t+1})+\varepsilon_{1,t+2}|y_t,y_{t-1},...] \\
+&= (0.09+0.72) \mathbb{E}_t[y_{1,t}|\cdot]+(0.24+0.32)\mathbb{E}_t[y_{2,t}|\cdot] \\
+& \quad + 0.3\mathbb{E}_t[\varepsilon_{1,t+1}|\cdot] +0.8\mathbb{E}_t[\varepsilon_{2,t+1}|\cdot] +\mathbb{E}_t[\varepsilon_{1,t+2}|\cdot]\\
+&= 0.81 y_{1,t} + 0.56 y_{2,t}.
+\end{aligned}
+$$
+
+Now, plugging this into the MSE expression---there seems to be a typo, where the MSE should be $\mathbb{E}[(x-\mathbb{E}[x])^2]$, not $(\mathbb{E}[x-\mathbb{E}[x]])^2=0$---and using the $y_{1,t+2}$ recursion derived above,
+
+$$
+\begin{aligned}
+\mathbb{E}_t[(y_{1,t+2}-\mathbb{E}_t[y_{1,t+2}|y_t, y_{t-1},...])^2] &= \mathbb{E}_t[(y_{1,t+2}-(0.81y_{1,t}+0.56 y_{2,t}))^2] \\
+&= \mathbb{E}_t[(0.81y_{1,t}+0.56y_{2,t}+0.3\varepsilon_{1,t+1}+0.8\varepsilon_{2,t+1}+\varepsilon_{1,t+2}\\
+& \quad \quad - 0.81y_{1,t}-0.56 y_{2,t})^2] \\
+&= \mathbb{E}_t[(0.3\varepsilon_{1,t+1}+0.8\varepsilon_{2, t+1}+\varepsilon_{1,t+2})^2]\\
+& \quad \text{as } \mathbb{E}_t[\varepsilon_{i,t}]=0, \text{ cancelling out the }\mathbb{E}[\cdot]^2 \text{ term of variance}  \\
+&= \mathbb{V}(0.3\varepsilon_{1,t+1}+0.8\varepsilon_{2,t+1}+\varepsilon_{1,t+2}) \\
+& \quad \text{by independence of } \varepsilon_{i,t} \text{ terms} \\
+&= 0.3^2\mathbb{V}(\varepsilon_{1,t+1})+0.8^2\mathbb{V}(\varepsilon_{2, t+1})+\mathbb{V}(\varepsilon_{1,t+2}) \\
+&= 0.09(1)+0.64(2)+1=2.37.
+\end{aligned}
+$$
+Then, the share of the mean-squared error coming from $\varepsilon_{1,t+1}$ is $0.09/2.37 \approx 0.038$, while the share from $\varepsilon_{1,t+2}$ is $1/2.37 \approx 0.422$.
 # The Permanent Income Model
 ## 1. Finding the Autocovariances
 
