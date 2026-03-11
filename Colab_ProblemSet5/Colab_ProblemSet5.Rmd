@@ -615,6 +615,57 @@ E[y_{t+k}|\mathcal{I}_t,y_0,\varepsilon_0]&=E[\phi y_{t+(k-1)}+\varepsilon_{t+k}
 $$
 
 ## 3. Conditional Likelihood
+
+The natural way to approach this problem is to use the definition of the likelihood
+and the chain rule of probability
+
+From that we can see:
+
+$$
+\begin{aligned}
+p(\mathcal{I}_t|y_0,\varepsilon_0)&=p(y_t,\ldots,y_1|y_0,\varepsilon_0)\\
+&=p(y_t,|y_0,\varepsilon_0,y_{t-1},\ldots,y_1)p(y_{t-1},\ldots,y_1|y_0,\varepsilon_0)\\
+&=p(y_t,|y_0,\varepsilon_0,y_{t-1},\ldots,y_1)p(y_{t-1}|y_0,\varepsilon_0,y_{t-2},\ldots,y_1)p(y_{t-2},\ldots,y_1|y_0,\varepsilon_0)\\
+\vdots & \\
+&=\prod_{\tau=1}^tp(y_\tau|y_0,\varepsilon_0,y_{\tau-1},\ldots)
+\end{aligned}
+$$
+
+Looking at any particular term in this product of densities, we can see it is
+the same as predicting the density of the next period, $\tau$ conditional on the
+history up to and including $\tau-1$. By the equation of motion for the ARMA, 
+conditional on this history, the residual variation will only be the unrealized $\varepsilon_\tau$ which is distributed normally. 
+
+As previously argued, the history of $y$s along with a $y_0$ and $\varepsilon_0$
+is sufficient to uniquely determine all of the $\varepsilon$s (up to $\tau-1$), so
+we can include the recursively computed $\varepsilon_{\tau-1}$ in the probability density.
+
+Since $y_{\tau-1}$ and $\varepsilon_{\tau-1}$ can be computed deterministically, and $\varepsilon_\tau$
+is normally distributed, is a linear function of normal random variables, so each
+term in the product will be a normal pdf with mean $\phi y_{\tau-1} + \gamma \varepsilon_{\tau-1}$ (from the realized portion) and variance $\sigma^2$ (from the unrealized portion).
+
+The normal pdf of this form is given by:
+
+$$
+p(y_\tau|y_0,\varepsilon_0,y_{\tau-1},\ldots)=\frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{(y_\tau-(\phi y_{\tau-1} + \gamma \varepsilon_{\tau-1}))^2}{2\sigma^2}\right)
+$$
+And then we can simplify our expression as:
+
+$$
+\begin{aligned}
+p(\mathcal{I}_t|y_0,\varepsilon_0)&=\prod_{\tau=1}^tp(y_\tau|y_0,\varepsilon_0,y_{\tau-1},\ldots) \\
+&=\prod_{\tau=1}^t\frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{(y_\tau-(\phi y_{\tau-1} + \gamma \varepsilon_{\tau-1}))^2}{2\sigma^2}\right) \\
+&=\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)^t\prod_{\tau=1}^t\exp\left(-\frac{(y_\tau-(\phi y_{\tau-1} + \gamma \varepsilon_{\tau-1}))^2}{2\sigma^2}\right) \\
+&=\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)^t\exp\left(\sum_{\tau=1}^t-\frac{(y_\tau-(\phi y_{\tau-1} + \gamma \varepsilon_{\tau-1}))^2}{2\sigma^2}\right) \\
+&=\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)^t\exp\left(-\frac{1}{2\sigma^2}\sum_{\tau=1}^t(\underbrace{y_\tau-(\phi y_{\tau-1} + \gamma \varepsilon_{\tau-1})}_{\varepsilon_\tau})^2\right) \\
+&=\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)^t\exp\left(-\frac{1}{2\sigma^2}\sum_{\tau=1}^t\varepsilon_\tau^2\right) \\
+&=(2\pi\sigma^2)^{-t/2}\exp\left(-\frac{1}{2\sigma^2}\sum_{\tau=1}^t\varepsilon_\tau^2\right) \\
+\end{aligned}
+$$
+
+Where those $\varepsilon_\tau$s can be compute deterministically from the data
+according to the procedure in the previous question.
+
 ## 4. State Space Representation
 
 A state space representation is a system of vector equations of the form:
