@@ -1015,7 +1015,7 @@ logLik_analytical <- function(y, eps, theta, y0, eps0) {
 
 ## 7. Applying the Kalman Filter
 
-For $y_t$#, the Kalman filter estimates exactly match the observed values. In our state space representation, the observation equation $y_t = Az_t$ has no noise term, so the data is perfectly informative about the latent state and the filter perfectly recovers the $y_t$ component of the state vector. 
+For $y_t$, the Kalman filter estimates exactly match the observed values. In our state space representation, the observation equation $y_t = Az_t$ has no noise term, so the data is perfectly informative about the latent state and the filter perfectly recovers the $y_t$ component of the state vector. 
 
 For $\varepsilon_t$, the Kalman filter estimates also seem to perfectly match the observed shocks, except for the first few periods. This is because the initial state estimate for $\varepsilon_1$ is 0, which is not correct. However, as the filter processes more data, it quickly learns the true values of $\varepsilon_t$ and the estimates converge to the true shocks.
 
