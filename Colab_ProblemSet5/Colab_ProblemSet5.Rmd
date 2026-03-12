@@ -13,6 +13,14 @@ header-includes:
 ---
 
 ```{r}
+rm(list=ls())  # clear environment
+library(mvtnorm)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+```
+
+```{r}
 seed_string <- "Roshie, Angie, Blair, Thomas, Aaron, John"
 seed_number <- 
   seed_string |>  
@@ -842,183 +850,328 @@ matrix before $\xi_t$.
 ## 5. Simulation
 
 ```{r}
-capT = 150
-# structural parameters
-phi = .9
-gamma = .1
-sigma_squared = 1
+# Parameters
+phi <- 0.9
+gamma1 <- 0.1
+sig2 <- 1
 
-# state space parameters
-dim_state <- 2
-Sigma = sigma_squared * diag(nrow = dim_state)
-R = matrix(c(1, 0, 
-             1, 0),
-           byrow = T, nrow = dim_state)
-Phi = matrix(c(phi, gamma,
-               0, 0),
-             byrow = T, nrow = dim_state)
-
-# Observation parameters
-dim_obs <- 1 #
-mu <- c(0)
-A <- matrix(c(1, 0), byrow = T, nrow = dim_obs, ncol = dim_state)
-H <- matrix(c(0), byrow = T, nrow = dim_obs)
-
-evolve_state <- function(z, Phi, R, Sigma){
-  # compute multivariate normal using linearity
-  xi = chol(Sigma)%*%rnorm(nrow(Sigma))
-  
-  (Phi %*% z) + R%*%xi
-}
-
-evolve_observations <- function(z, mu, A, H){
-  eta <- rnorm(nrow(H))
-  
-  mu + (A %*% z) + H%*%eta
-}
-
-z0 = c(0,0)
-simulate <- function(capT, z0, Phi, R, Sigma, mu, A, H){
-  # loop capT times, feeding the result of the last iteration into
-  # this this iteration
-  states <- purrr::accumulate(
-  1:capT,
-  ~ evolve_state(.x, Phi, R, Sigma),
-  .init = z0
-)
-  
-  # compute observation from latent state
-  observations <- lapply(states, function(z){
-    evolve_observations(z, mu, A, H)
-  })
-  
-  # return long matrices with one row per time step
-  # remove the time zero information
-  states <- do.call(cbind, states) |> t() |> tail.matrix(n = capT)
-  observations = do.call(cbind, observations) |> t() |> tail.matrix(n = capT)
-  
-  return(list(states = states, observations = observations))
-}
-
-sim_results <- simulate(capT, c(0,0), Phi, R, Sigma, mu, A, H)
-
-library(ggplot2)
-ggplot()+
-  geom_line(aes(x=1:nrow(sim_results$observations), 
-                y=sim_results$observations[,1]))+
-  labs(y = expression("y"[t]*""),
-       x = "t")
+theta <- c(phi, gamma1, sig2)
 ```
 
 ```{r}
-y_list <- sim_results$observations[,1]
-compute_e <- function(y_list, y0 = 0, e0 = 0) {
-  n <- length(y_list)
-  e <- numeric(n)
+simulateARMA <- function(t, theta, y0, eps0) {
+  # ************************************************************************ #
+  # Simulates ARMA(1,1) data of length t: 
+  #   y_t = \phi y_{t-1} + \epsilon_t + \gamma_1 \epsilon_{t-1}, 
+  # where \epsilon_t ~ N(0, \sigma^2) and \epsilon_0 = eps0, y_0 = y0
+  #
+  # Inputs:
+  #   t: length of time series to simulate
+  #   theta: model parameters phi, gamma1, sig2
+  #   y0, eps0: initial value of y_0 and \epsilon_0
+  #
+  # Output: List
+  #   y: vector of simulated data y = (y_1, ... y_t)
+  #   eps: vector of shocks
+  # ************************************************************************ #
 
-  for (t in seq_len(n)) {
-    ytm1 <- if (t == 1) y0 else y_list[t - 1]
-    etm1 <- if (t == 1) e0 else e[t - 1]
-    e[t] <- y_list[t] - phi * ytm1 - gamma * etm1
+  phi <- theta[1]
+  gamma1 <- theta[2]
+  sig2 <- theta[3]
+  
+  eps <- c(eps0, rnorm(t, mean = 0, sd = sqrt(sig2)))  # draw t shocks
+  
+  y <- numeric(t+1)  # init zero vector of length t
+  y[1] <- y0         # set y_0 = y0
+  for (i in 2:(t+1)) {
+    y[i] <- phi * y[i - 1] + eps[i] + gamma1 * eps[i - 1]
   }
-
-  e
+  return(list(y = y[-1], eps = eps[-1]))  # return y_1,...,y_t and eps_1,...,eps_t
 }
+```
 
-#compute_e(y_list)
-plot(sim_results$states[,2],compute_e(y_list))
+```{r}
+set.seed(seed_number)
+
+# Simulate data with t=150, y0=0, eps0=0
+t <- 150
+sim_data <- simulateARMA(t, theta, y0 = 0, eps0 = 0)
+y_sim <- sim_data$y
+eps_sim <- sim_data$eps
+
+# Plot the simulated data
+plot(y_sim, type = "l", col = "blue", lwd = 2,
+     main = "Simulated ARMA(1,1) Data", xlab = "Time", ylab = "y_t")
 ```
 
 ## 6. Implementing the Kalman Filter
 
 ```{r}
-# NOTATION NOTE 
-# a variable x_t_tm1
-# is x_{t|t-1} in latex
-# this is used for both ys and Ps
-
-# functions that advance our guesses from time t-1 forward to t
-compute_z_t_tm1 <- function(z_t_t, Phi){
-  Phi %*% z_t_t
-}
-
-compute_P_t_tm1 <- function(P_t_t, Phi, R, Sigma){
-  (Phi%*%P_t_t%*%t(Phi)) + (R%*%Sigma%*%t(R))
-}
-
-# functions that compute things about the prediction error and its variance
-compute_v_t <- function(y_t, z_t_tm1, mu, A){
- y_t - (mu) - (A %*% z_t_tm1)
-}
-
-v_outer <- function(P_t_tm1, A, H){
-  (A %*% P_t_tm1 %*% t(A)) + (H%*%t(H))
-}
-
-# functions that update our guess of the current state given current information
-compute_z_t_t <- function(z_t_tm1, P_t_tm1, v_t, A, H){
-  big_inverse <- solve(v_outer(P_t_tm1, A, H))
-  z_t_tm1 + (P_t_tm1%*%t(A)%*%big_inverse%*%v_t)
-}
-
-compute_P_t_t <- function(P_t_tm1, A, H){
-  big_inverse <- solve(v_outer(P_t_tm1, A, H))
-  P_t_tm1 - (P_t_tm1%*%t(A)%*%big_inverse%*%A%*%t(P_t_tm1))
-}
-
-
-kalman_filter <- function(obs_mat, z0, P0, mu, A, H, Phi, R){
-  # the obs_mat is a long matrix to hold the vectors of observations
-  # an observation y is a column vector, so we'll need to be careful to transpose
-  # it after we slice out an observation
+kalmanFilter <- function(y, theta) {
+  # ************************************************************************ #
+  # Implements Kalman filter for ARMA(1,1) model:
+  #   y_t = \phi y_{t-1} + \epsilon_t + \gamma_1 \epsilon_{t-1},
+  # where \epsilon_t ~ N(0, \sigma^2). 
+  # We use state vector s_t = (y_t, eps_t).
+  #
+  # Inputs:
+  #   y: vector of observed data (length t)
+  #   theta: model parameters phi, gamma1, sig2
+  # 
+  # Output: List
+  #   s: vector of state estimates s_t = E[s_t | y^t]
+  #   P: vector of state covariance matrices P_t = Var[s_t | y^t]
+  #   logLik: log likelihood of data: log L(y) = \sum_{t=1}^T log p(y_t | y^{t-1})
+  # ************************************************************************ #
   
+  phi <- theta[1]
+  gamma1 <- theta[2]
+  sig2 <- theta[3]
   
-  # define a long matrix to hold the vectors of states over time
-  # a state is a column vector, so when working with it, we'll need to be 
-  # careful about transposing
-  state_mat <- matrix(nrow = nrow(obs_mat), ncol = ncol(Phi))
+  t <- length(y)
+  s <- array(0, dim = c(t, 2))     # init state estimates
+  colnames(s) <- c("y", "eps")
+  P <- array(0, dim = c(2, 2, t))  # init state covariance matrices
   
-  # start to build new guesses of the state based on the last iteration
-  for (i in 1:nrow(obs_mat)){
+  # State space representation
+  A   <- matrix(c(1,0), nrow = 1, ncol = 2)
+  Phi <- matrix(c(phi, gamma1, 0, 0), nrow = 2, ncol = 2, byrow = TRUE)
+  R   <- matrix(c(1, 1), nrow = 2, ncol = 1)
+
+  # Initialization using unconditional moments (s_{1|0}, P_{1|0})
+  s[1, ] <- c(0, 0)
+  p11 <- (1 + (phi + gamma1)^2 / (1 - phi^2)) * sig2  # derived in part 1
+  P[, , 1] <- matrix(c(p11, sig2, sig2, sig2), nrow = 2, ncol = 2)
+
+  # Initialize log-likelihood
+  logLik <- 0
+
+  # Kalman filter recursion
+  for (i in 1:t) {
+    # Prediction
+    v <- as.numeric(y[i] - A %*% s[i, ])        # y_i - As_{i|i-1}
+    Evv <- as.numeric(A %*% P[, , i] %*% t(A))  # AP_{i|i-1}A'
     
-    # in every step we need to use last period's state z and P matrix
-    # to compute this period's state, but in the first period 
-    if (i == 1){
-      # base case use the supposition on z0
-      z_t_t <- z0 |> matrix(ncol = 1)
-      P_t_t <- P0
+    # Add log-likelihood
+    logLik <- logLik - 0.5 * (log(2 * pi) + log(Evv) + (v^2) / Evv)
+    
+    # Update: s_{i|i} and P_{i|i}
+    s[i, ] <- s[i, ] + P[, , i] %*% t(A) * v / Evv
+    P[, , i] <- P[, , i] - (P[, , i] %*% t(A) %*% A %*% t(P[, , i])) / Evv
+     
+    # Predict: s_{i+1|i} and P_{i+1|i}
+    if (i < t) {
+      s[i+1, ] <- Phi %*% s[i, ]
+      P[, , i+1] <- Phi %*% P[, , i] %*% t(Phi) + R %*% sig2 %*% t(R)
     }
-    
-    # move last period's "new" estimates to be old
-    z_t_tm1 <- z_t_t
-    P_t_tm1 <- P_t_t
-    print(z_t_tm1)
-    print(P_t_tm1)
-    
-    
-    # get prediction error
-    y_t <- obs_mat[i,] |> t()
-    v_t <- compute_v_t(y_t, z_t_tm1, mu, A)
-    
-    # estimate current state using errors:
-    z_t_t <- compute_z_t_t(z_t_tm1, P_t_tm1, v_t, A, H)
-    P_t_t <- compute_P_t_t(P_t_tm1, A, H)
-    state_mat[i,] <- t(z_t_t)
   }
   
-  return(state_mat)
+  return(list(s = s, P = P, logLik = logLik))
+}
+```
+
+## 7. Applying the Kalman Filter
+
+```{r}
+# Run Kalman filter on simulated data
+kf_result <- kalmanFilter(y_sim, theta)
+s_est <- kf_result$s
+P_est <- kf_result$P
+logLik <- kf_result$logLik
+
+# Plot state estimates alongside data
+plot(y_sim, type = "l", col = "blue", lwd = 2,
+     main = "Kalman Filter State Estimates: y_t", xlab = "Time", ylab = "y_t")
+lines(s_est[, "y"], col = "red", lwd = 2)
+legend("topright", legend = c("Observed", "Estimated"), 
+       col = c("blue", "red"), lwd = 2)
+
+plot(eps_sim, type = "l", col = "blue", lwd = 2,
+     main = "Kalman Filter State Estimates: epsilon_t", xlab = "Time", ylab = "eps_t")
+lines(s_est[, "eps"], col = "red", lwd = 2)
+legend("topright", legend = c("Observed", "Estimated"), 
+       col = c("blue", "red"), lwd = 2)
+```
+
+# Metropolis Hastings
+## 1. Numerical Maximization
+
+```{r}
+computeLogLik <- function(theta, y) {
+  # ************************************************************************ #
+  # Evaluates and maximizes the log-likelihood 
+  #   log L(y^T | theta) + log(p(theta)) 
+  # where p(theta) is the prior over theta = (phi, gamma1, sig2). 
+  # Assuming flat priors, this reduces to maximizing log L(y^T | theta)
+  #
+  # Inputs:
+  #   theta: model parameters phi, gamma1, sig2
+  #   y: vector of observed data (length t)
+  #
+  # Output:
+  #   log_lik: log-likelihood of data given theta
+  # ************************************************************************ #
+  
+  # Handles constraints on theta
+  phi <- theta[1]
+  sig2 <- theta[3]
+  if (abs(phi) >= 1 || sig2 <= 0) {
+    return(-Inf)
+  }
+  
+  # Evaluate log-likelihood using Kalman filter
+  kf_out <- kalmanFilter(y, theta)
+  log_lik <- kf_out$logLik
+  
+  return(log_lik)
+}
+
+max_likelihood <- function(y) {
+  # ************************************************************************ #
+  # Maximizes the log-likelihood. See computeLogLik().
+  #
+  # Inputs:
+  #   y: vector of observed data (length t)
+  #
+  # Output: 
+  #   theta_bar: parameter values that maximize the log-likelihood
+  #   Sigma: inverse of negative Hessian of log-likelihood at theta_bar
+  # ************************************************************************ #
+  
+  # Initial guess for theta = c(phi, gamma1, sig2)
+  theta_init <- c(phi = 0, gamma1 = 0.1, sig2 = var(y))
+  
+  # Run optimization routine
+  opt_result <- optim(
+    par = theta_init,
+    fn = computeLogLik,
+    y = y,
+    method = "L-BFGS-B",  # Broydon's method :)
+    lower = c(-0.99, -Inf, 0.01),
+    upper = c(0.99, Inf, Inf),
+    control = list(fnscale = -1),  # minimum negative LL
+    hessian = TRUE
+  )
+  
+  theta_bar <- opt_result$par
+  negH <- -opt_result$hessian
+  Sigma <- solve(negH)
+  
+  return(list(theta_bar = theta_bar, Sigma = Sigma))
 }
 ```
 
 ```{r}
-obs_mat <- sim_results$observations
-z0 <- c(0,0)
-P0 <- diag(nrow = 2)
-#kalman_filter(obs_mat, z0, P0, mu, A, H, Phi, R)
+# Estimate parameters using MLE
+mle_result <- max_likelihood(y_sim)
+
+theta_bar <- mle_result$theta_bar
+Sigma <- mle_result$Sigma
 ```
 
-## 7. Applying the Kalman Filter
-# Metropolis Hastings
-## 1. Numerical Maximization
 ## 2. Generating M-H Draws
+
+```{r}
+metropolisHastings <- function(y, theta_bar, Sigma, N = 10000, c = 1) {
+  # ************************************************************************ #
+  # Implements Metropolis-Hastings algorithm.
+  #
+  # Inputs:
+  #   y: vector of observed data
+  #   theta_bar: parameter values maximizing log-likelihood
+  #   Sigma: inverse of negative Hessian of log-likelihood at theta_bar
+  #   N: number of MCMC samples to draw
+  #   c: scales variance in candidate density
+  #
+  # Output:
+  #   theta_samples: matrix of sampled parameter values (N x length(theta))
+  # ************************************************************************ #
+  theta_samples <- matrix(NA, nrow = N, ncol = length(theta_bar))
+  colnames(theta_samples) <- c("phi", "gamma1", "sig2")
+  
+  # Counter for acceptance rate
+  accept_count <- 0
+  
+  # Draw initial sample
+  theta_prev <- rmvnorm(n = 1, mean = theta_bar, sigma = c*Sigma)
+  theta_samples[1,] <- theta_prev
+  logLik_prev <- computeLogLik(theta_prev, y)
+  
+  # theta_prev stores theta_{i-1}
+  # logLik_prev stores logL(y|theta_{i-1})
+  
+  for (t in 2:N) {
+    theta_cand <- rmvnorm(n = 1, mean = theta_prev, sigma = c*Sigma)
+    # logLik_curr stores logL(y|theta_cand)
+    logLik_curr <- computeLogLik(theta_cand, y)
+    alpha <- min(1, logLik_curr - logLik_prev)  # log transformed
+    if (is.finite(logLik_curr) && (log(runif(1)) < alpha)) {
+      # is.finite() rejects infeasible candidates (e.g., |phi|>1)
+      theta_samples[t,] <- theta_cand
+      theta_prev <- theta_cand
+      logLik_prev <- logLik_curr
+      accept_count <- accept_count + 1
+    } else {
+      theta_samples[t,] <- theta_prev
+    }
+    
+    if (t %% (N / 10) == 0) {
+      cat(sprintf("Iteration %d / %d | Current Acceptance Rate: %.2f%%\n", 
+                  t, N, (accept_count / t) * 100))
+    }
+  }
+  
+  cat(sprintf("\nFinal Acceptance Rate: %.2f%%\n", (accept_count / N) * 100))
+  return(theta_samples)
+}
+```
+
 ## 3. Lots of Simulations
+
+```{r lots-of-simultation-be-patient}
+set.seed(seed_number)
+N <- 100000  # CHANGE TO 500000 BEFORE SUBMITTING
+MHdraws <- metropolisHastings(y_sim, theta_bar, Sigma, N = N, c = 2)
+```
+
+```{r}
+# Discard burn-in
+burn_in <- 0.6 * N
+MHdraws_conv <- MHdraws[(burn_in + 1):N, ]
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+# Plot marginal density of params
+true_vals <- data.frame(
+  parameter = factor(c("phi", "gamma[1]", "sigma^2"), 
+                     levels = c("phi", "gamma[1]", "sigma^2")),
+  true_value = c(0.9, 0.1, 1)
+)
+draws_df <- as.data.frame(MHdraws_conv) %>%
+  pivot_longer(cols = c("phi", "gamma1", "sig2"), 
+               names_to = "parameter", 
+               values_to = "value") %>%
+  mutate(parameter = factor(parameter, 
+                            levels = c("phi", "gamma1", "sig2"),
+                            labels = c("phi", "gamma[1]", "sigma^2")))
+
+ggplot(draws_df, aes(x = value)) +
+  geom_density(fill = "steelblue", alpha = 0.4, color = "navy", linewidth = 0.8) +
+  geom_vline(data = true_vals, aes(xintercept = true_value), 
+             color = "firebrick", linetype = "dashed", linewidth = 1) +
+  facet_wrap(~ parameter, scales = "free", ncol = 1, labeller = label_parsed) +
+  labs(title = "Marginal Posterior Densities",
+       x = "Parameter Value",
+       y = "Density") +
+  theme_bw(base_size = 14) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    strip.background = element_rect(fill = "grey95", color = "grey50"),
+    strip.text = element_text(size = 14),
+    panel.grid.minor = element_blank()
+  )
+```
