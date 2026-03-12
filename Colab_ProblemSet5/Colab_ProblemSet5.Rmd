@@ -14,8 +14,10 @@ header-includes:
 
 ```{r}
 rm(list=ls())  # clear environment
-library(tidyverse)
 library(mvtnorm)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
 ```
 
 ```{r}
@@ -1126,7 +1128,7 @@ metropolisHastings <- function(y, theta_bar, Sigma, N = 10000, c = 1) {
 
 ## 3. Lots of Simulations
 
-```{r}
+```{r lots-of-simultation-be-patient}
 set.seed(seed_number)
 N <- 100000  # CHANGE TO 500000 BEFORE SUBMITTING
 MHdraws <- metropolisHastings(y_sim, theta_bar, Sigma, N = N, c = 2)
@@ -1139,6 +1141,10 @@ MHdraws_conv <- MHdraws[(burn_in + 1):N, ]
 ```
 
 ```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
 # Plot marginal density of params
 true_vals <- data.frame(
   parameter = factor(c("phi", "gamma[1]", "sigma^2"), 
