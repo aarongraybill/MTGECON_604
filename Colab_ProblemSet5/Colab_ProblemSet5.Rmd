@@ -92,24 +92,25 @@ $$
 $$
 **Solution:**
 
-We can rewrite $Y_t$ in the form
-$$\xi_t = \mathbf{F} \xi_{t - 1} + \eta_t.$$
-Then,
-$$\begin{aligned}
-\begin{bmatrix}
-y_t \\
-y_{t-1}
-\end{bmatrix} &= \begin{bmatrix}
-1.1 & -0.18 \\
-1 & 0
-\end{bmatrix} \begin{bmatrix}
-y_{t-1} \\
-y_{t-2}
-\end{bmatrix} + \begin{bmatrix}
-\varepsilon_t \\
-0
-\end{bmatrix}
-\end{aligned}$$
+First, we write the process in non-lag operator notation:
+
+$$
+\begin{aligned}
+(1-1.1L+0.18L^2)Y_t = \varepsilon_t & \Rightarrow Y_t - 1.1LY_t + 0.18L^2Y_t = \varepsilon_t \\ 
+& \Rightarrow Y_t - 1.1Y_{t-1} + 0.18Y_{t-2} = \varepsilon_t.
+\end{aligned}
+$$
+
+Next, we rewrite the process into companion form:
+
+$$
+\underbrace{\begin{pmatrix} Y_t \\ Y_{t-1} \end{pmatrix}}_{\xi_t}
+=
+\underbrace{\begin{pmatrix} 1.1 & -0.18 \\ 1 & 0 \end{pmatrix}}_{F}
+\underbrace{\begin{pmatrix} Y_{t-1} \\ Y_{t-2} \end{pmatrix}}_{\xi_{t-1}}
++
+\underbrace{\begin{pmatrix} \varepsilon_t \\ 0 \end{pmatrix}}_{\eta_t}.
+$$
 
 We find the eigenvalues of $\mathbf{F}$ by solving
 $$\begin{aligned}
@@ -119,43 +120,68 @@ $$\begin{aligned}
 (\lambda - 0.9)(\lambda - 0.2) &=  0.
 \end{aligned}$$
 
-Therefore, the two eigenvalues are $\lambda_1 = 0.2$ and $\lambda_2 = 0.9$. Because 
-$$\max_i |\lambda_i| < 1$$
-we know that this AR(2) process admits a covariance-stationary MA($\infty$) process.
+Therefore, the two eigenvalues are $\lambda_1 = 0.2$ and $\lambda_2 = 0.9$. Since both eigenvalues have absolute value less than $1$, the process is covariance-stationary.
 
+Next, we calculate the autocovariances. If we follow the approach outlined in the section notes, the algebra becomes quite tedious, so we use the Yule-Walker algorithm instead, which is much cleaner to implement. We start with the AR(2) process and multiple the equation by $Y_t$ and take the expectation:
 
-To calculate the mean and autocovariance, we proceed with the eigendecomposition of
-$\mathbf{F}$, which is:$$\begin{aligned}
-\mathbf{T}\mathbf{\Lambda}\mathbf{T}^{-1} &= \begin{pmatrix} 0.2 & 0.9 \\ 1 & 1 \end{pmatrix} \begin{pmatrix} 0.2 & 0 \\ 0 & 0.9 \end{pmatrix} \begin{pmatrix} -\frac{10}{7} & \frac{9}{7} \\ \frac{10}{7} & -\frac{2}{7} \end{pmatrix}
-\end{aligned}$$
+From $$
+\begin{aligned}
+Y_t = 1.1Y_{t-1} - 0.18Y_{t-2} + \varepsilon_t & \Rightarrow Y_tY_t = 1.1Y_{t-1}Y_t - 0.18Y_{t-2}Y_t + \varepsilon_tY_t \\ 
+& \Rightarrow \underbrace{\mathbb{E}[Y_tY_t]}_{\gamma_0} = 1.1 \underbrace{\mathbb{E}[Y_{t-1}Y_t]}_{\gamma_1} - 0.18\underbrace{\mathbb{E}[Y_{t-2}Y_t]}_{\gamma_2} + \underbrace{\mathbb{E}[\varepsilon_tY_t]}_{=1} \\
+& \Rightarrow \gamma_0 = 1.1\gamma_1 - 0.18\gamma_2 + 1,
+\end{aligned}
+$$ where $\mathbb{E}[\varepsilon_tY_t]$ is equal to 1 because today's shock $\varepsilon_t$ is perfectly correlated with today's value $Y_t$ by a factor of its own variance $\sigma^2 = 1$.
 
-Then,
-$$\begin{aligned}
-F_{1,1}^j &= 0.2^2\left(- \frac{10}{7}\right) + 0.9^2 \left( \frac{10}{7}\right)\\
-&= \left(\frac{-2}{7}\right)0.2^j + \left(\frac{9}{7}\right)0.9^j.
-\end{aligned}$$
+Next, we multiply our process by $Y_{t-1}$:
 
-If $\psi_j =  \left(-\frac{2}{7}\right)0.2^j + \left(\frac{9}{7}\right)0.9^j$, then
-$$ Y_t = \sum_{j = 0}^{\infty} \psi_j \epsilon_{t-j}.$$
+$$
+\begin{aligned}
+\begin{aligned}
+Y_t = 1.1Y_{t-1} - 0.18Y_{t-2} + \varepsilon_t & \Rightarrow Y_tY_{t-1} = 1.1Y_{t-1}Y_{t-1} - 0.18Y_{t-2}Y_{t-1} + \varepsilon_tY_{t-1} \\ 
+& \Rightarrow \underbrace{\mathbb{E}[Y_tY_{t-1}]}_{\gamma_1} = 1.1 \underbrace{\mathbb{E}[Y_{t-1}Y_{t-1}]}_{\gamma_0} - 0.18\underbrace{\mathbb{E}[Y_{t-2}Y_{t-1}]}_{\gamma_1} + \underbrace{\mathbb{E}[\varepsilon_tY_{t-1}]}_{=0} \\
+& \Rightarrow \gamma_1 = 1.1\gamma_0 - 0.18\gamma_1,
+\end{aligned}
+\end{aligned}
+$$ where $\mathbb{E}[\varepsilon_tY_{t-1}]$ is equal to 0 because today's shock $\varepsilon_t$ hasn't happened at time $t-1$, so it has zero correlation with $Y_{t-1}$.
 
-We can see that
-$$\mathbb{E}[Y_t] = 0.$$
+Finally, we multiply our process by $Y_{t-2}$:
 
-For the autocovariance, 
-$$\begin{aligned}
-\gamma_{j} &= \mathbb{E}[(Y_t - \mu)(Y_{t-k} - \mu)\\
-&= \mathbb{E}(Y_{t} Y_{t-k}) = \mathbb{E} \left[ \left( \sum_{j=0}^{\infty} \psi_{j} \varepsilon_{t-j} \right) \left( \sum_{l=0}^{\infty} \psi_{l} \varepsilon_{t-l} \right) \right] \\
-&= \mathbb{E} \left[ \sum_{n=0}^{\infty} \sum_{j=0}^{n} \left(\psi_{j}\varepsilon_{t-j}\right) \left(\psi_{n-j} \varepsilon_{t-(n-j)}\right) \right] \text{(by Cauchy product)}\\
-&= \sum_{n=0}^{\infty} \sum_{j=0}^{n} \psi_{j} \psi_{n-j} \mathbb{E}[\varepsilon_{t-j} \varepsilon_{t-n+j}] \\
-\end{aligned}$$
+$$ \begin{aligned} \begin{aligned} Y_t = 1.1Y_{t-1} - 0.18Y_{t-2} + \varepsilon_t & \Rightarrow Y_tY_{t-2} = 1.1Y_{t-1}Y_{t-2} - 0.18Y_{t-2}Y_{t-2} + \varepsilon_tY_{t-2} \\  & \Rightarrow \underbrace{\mathbb{E}[Y_tY_{t-2}]}_{\gamma_2} = 1.1 \underbrace{\mathbb{E}[Y_{t-1}Y_{t-2}]}_{\gamma_1} - 0.18\underbrace{\mathbb{E}[Y_{t-2}Y_{t-2}]}_{\gamma_0} + \underbrace{\mathbb{E}[\varepsilon_tY_{t-2}]}_{=0} \\ & \Rightarrow \gamma_2 = 1.1\gamma_1 - 0.18\gamma_0, \end{aligned} \end{aligned} $$ where $\mathbb{E}[\varepsilon_tY_{t-2}]$ is equal to 0 because today's shock $\varepsilon_t$ hasn't happened at time $t-2$, so it has zero correlation with $Y_{t-1}$.
 
-We know that $\mathbb{E}[\varepsilon_{t-j} \varepsilon_{t - n + j}] = 1$ when the indexes are equal to each other $t- j = t - n + j$, which occurs when $n = 2j$. Suppose $n = 0$, then $j = 0$ and we have $\psi_0 \psi_0$. Suppose $n = 2$, then $j = 1$ and we have $\psi_1 \psi_1$, etc. 
+Now, we have 3 equations and 3 unknowns:
 
-Thus, we can observe that the above expression simplifies to 
-$$\begin{aligned}
-\gamma_j &= \sum_{j=0}^{\infty} \psi_{j}^{2} \mathbf{1} \{j \text{ is even}\} \\
-&= \sum_{j=0}^{\infty} \left[ \left( -\frac{2}{7} \right) 0.2^{j} + \left( \frac{9}{7} \right) 0.9^{j} \right]^{2} \mathbf{1} \{j \text{ is even}\} \\
-\end{aligned}$$
+$$
+\begin{aligned}
+\gamma_0 & = 1.1\gamma_1 - 0.18\gamma_2 + 1 \\ 
+\gamma_1 &= 1.1\gamma_0 - 0.18\gamma_1 \\ 
+\gamma_2 &= 1.1\gamma_1 - 0.18\gamma_0.
+\end{aligned}
+$$ The second equation implies $$
+1.18\gamma_1 = 1.1\gamma_0
+\quad\Rightarrow\quad
+\gamma_1 \approx 0.932\,\gamma_0.
+$$ The third equation implies
+
+$$
+\gamma_2 = 1.1 \gamma_1 - 0.18\gamma_0 \Rightarrow \gamma_2 =  1.1(0.932\gamma_0) - 0.18\gamma_0
+\approx 0.845\,\gamma_0.
+$$
+
+Substituting $\gamma_1 \approx 0.932\gamma_0$ and $\gamma_2 \approx 0.845\gamma_0$ into the first equation implies $$
+\gamma_0 = 1.1(0.932\gamma_0) - 0.18(0.845\gamma_0) + 1
+\quad\Rightarrow\quad
+\gamma_0 \approx 7.89.
+$$
+
+Hence $$
+\gamma_1 \approx 0.932(7.89) \approx 7.35,
+\qquad
+\gamma_2 \approx 0.845(7.89) \approx 6.67.
+$$
+
+For $k\geq 3$: $$
+\gamma_k = 1.1\gamma_{k-1} - 0.18\gamma_{k-2}.
+$$
 
 
 ## Exercise 3.3
