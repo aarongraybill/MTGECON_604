@@ -12,9 +12,9 @@ header-includes:
   - \usepackage{amsmath}
 ---
 
-REMEMBER TO GO TO CHUNK "lots-of-simulation-be-patient" AND CHANGE N TO 500000
+### REMEMBER TO GO TO CHUNK "lots-of-simulation-be-patient" AND CHANGE N TO 500000
 
-```{r}
+```{r setup, include=FALSE}
 rm(list=ls())  # clear environment
 library(mvtnorm)
 library(dplyr)
