@@ -334,7 +334,9 @@ $$
 \end{aligned}
 $$
 Then, the share of the mean-squared error coming from $\varepsilon_{1,t+1}$ is $0.09/2.37 \approx 0.038$, while the share from $\varepsilon_{1,t+2}$ is $1/2.37 \approx 0.422$.
+
 # The Permanent Income Model
+
 ## 1. Finding the Autocovariances
 
 Conditional on the information available at time $t$, all of the future random 
@@ -346,30 +348,30 @@ expectations are themselves a random variable from the perspective of period $t$
 because they depend on the news revealed in period $t+1$. In particular, in period
 $t+1$, a new value $x_{t+1}$ will be revealed, recentering the agents expectations
 of all future periods. If $j=0$, then from period $t+1$'s perspective, $y_{t+1}$
-is observed with certainty. But all future $j\geq 1$ are centered at $x_{t+1}$.
+  is observed with certainty. But all future $j\geq 1$ are centered at $x_{t+1}$.
 
 Noting that $x_{t+1}=x_t+\eta_{t+1}$ and $y_{t+1}=x_{t}+\eta_{t+1}+\varepsilon_{t+1}$, we see that:
-
-$$
-E_{t+1}[y_{t+j+1}]-E_t[y_{t+j+1}]=
-\begin{cases}
+  
+  $$
+  E_{t+1}[y_{t+j+1}]-E_t[y_{t+j+1}]=
+  \begin{cases}
 x_{t}+\eta_{t+1}+\varepsilon_{t+1} - x_t & j=0 \\
 x_t+\eta_{t+1}-x_t & j \geq 1
 \end{cases}
 $$
-
-Which obviously simplifies to:
-
-$$
-E_{t+1}[y_{t+j+1}]-E_t[y_{t+j+1}]=\begin{cases}
+  
+  Which obviously simplifies to:
+  
+  $$
+  E_{t+1}[y_{t+j+1}]-E_t[y_{t+j+1}]=\begin{cases}
 \eta_{t+1}+\varepsilon_{t+1}& j=0 \\
 \eta_{t+1} & j \geq 1
 \end{cases}
 $$
-With that in mind, we can conveniently express $\Delta c_{t+1}\equiv c_{t+1}-c_{t}$ as:
-
-$$
-\begin{aligned}
+  With that in mind, we can conveniently express $\Delta c_{t+1}\equiv c_{t+1}-c_{t}$ as:
+  
+  $$
+  \begin{aligned}
 \Delta c_{t+1}&=(1-\beta)\sum_{j=0}^\infty\beta^j\left( E_{t+1}[y_{t+j+1}]-E_t[y_{t+j+1}]\right)\\
 &=(1-\beta)\beta^0\left( E_{t+1}[y_{t+0+1}]-E_t[y_{t+0+1}]\right)+(1-\beta)\sum_{j=1}^\infty\beta^j\left( E_{t+1}[y_{t+j+1}]-E_t[y_{t+j+1}]\right)\\
 &=(1-\beta)\left( \eta_{t+1}+\varepsilon_{t+1}\right)+(1-\beta)\sum_{j=1}^\infty\beta^j\eta_{t+1}\\
@@ -380,19 +382,19 @@ $$
 &=(1-\beta)\varepsilon_{t+1}+\eta_{t+1} \\
 \end{aligned}
 $$
-
-If we define $u_{t}=(1-\beta)\varepsilon_{t+1}+\eta_{t+1}\sim\mathcal{N}(0,(1-\beta)^2\sigma_\varepsilon^2+\sigma_\eta^2)$, then we can think of $\Delta c_{t}$ as white noise process with mean 0 and variance: $(1-\beta)^2\sigma_\varepsilon^2+\sigma_\eta^2)$.
+  
+  If we define $u_{t}=(1-\beta)\varepsilon_{t+1}+\eta_{t+1}\sim\mathcal{N}(0,(1-\beta)^2\sigma_\varepsilon^2+\sigma_\eta^2)$, then we can think of $\Delta c_{t}$ as white noise process with mean 0 and variance: $(1-\beta)^2\sigma_\varepsilon^2+\sigma_\eta^2)$.
 
 From this, it is clear to see that the IRFs and autocovariances for all $j\neq 0$
-will be zero. There is absolutely no information passed between periods (at least
-for the per-period change in consumption).
+  will be zero. There is absolutely no information passed between periods (at least
+                                                                           for the per-period change in consumption).
 
 If $j=0$, then we have already expressed the variance as $(1-\beta)^2\sigma_\varepsilon^2+\sigma_\eta^2)$ Clearly, these are increasing in the variances of the primitives. But interesting as the agent
 becomes more patient ($\beta\to 1$), the variance in consumption reduces to only variance
 in the permanent component (because people no longer respond to the transitory shocks.)
 
 And the IRFs are simply the partials with respect to $\varepsilon$ which is $(1-\beta)$
-and for $\eta$ which is $1$.
+  and for $\eta$ which is $1$.
 
 Assuming $\beta\in (0,1)$ (people strictly discount the future), then the magnitude
 of a transitory shock on the change in consumption is less than the same sized shock
@@ -405,7 +407,7 @@ approaches zero (little change to previous period consumption).
 Noting that 
 
 $$
-\begin{aligned}
+  \begin{aligned}
 \Delta y_{t+1}&=(x_{t+1}+\varepsilon_{t+1})-(x_{t}+\varepsilon_{t}) \\
 &=(x_t+\eta_{t+1}+\varepsilon_{t+1})-(x_{t}+\varepsilon_{t})\\
 &=\eta_{t+1}+\varepsilon_{t+1}-\varepsilon_{t}%\\
@@ -414,29 +416,29 @@ $$
 %&=\underbrace{\eta_{t+1}+(1-\beta)\varepsilon_{t+1}}_{\Delta %c_{t+1}}-\varepsilon_{t}+\beta\varepsilon_{t+1}\\
 \end{aligned}
 $$
-
-Decrementing the indices by one period, we can see that:
-
-$$
-\begin{bmatrix}\Delta c_{t}\\ \Delta y_{t}\end{bmatrix}=\begin{bmatrix} (1-\beta)\varepsilon_{t}+\eta_{t} \\ \eta_{t}+\varepsilon_{t}-\varepsilon_{t-1} \end{bmatrix}
-$$
-
-From this form, it would be natural to represent using matrix notation:
-
-$$
-\mathbf{\Delta}_t = \mathbf{\Psi}_0\mathbf{u}_t+ \mathbf{\Psi}_1\mathbf{u}_{t-1}
-$$
-
-Where
-$$
-\mathbf{\Psi}_0=\begin{bmatrix}(1-\beta) &1\\ 1 & 1 \end{bmatrix}, \mathbf{\Psi}_1=\begin{bmatrix}0 & 0 \\
--1 & 0 \\ \end{bmatrix},\mathbf{u}_t\sim WN\left(\mathbf{0},\begin{bmatrix}\sigma_\varepsilon^2 & 0\\ 0 & \sigma_\eta^2\end{bmatrix}\right)
-$$
-
-Which is a rather simple vector moving average equation, but it still suffers
-from an identification problem because it has 8 parameters including some on the
-contemporaneous shocks. One way to take care that is to redefine the contemporaneous
-shocks so that they're no longer orthogonal but there is no longer a $\mathbf{\Psi}_0$ matrix.
+  
+  Decrementing the indices by one period, we can see that:
+  
+  $$
+  \begin{bmatrix}\Delta c_{t}\\ \Delta y_{t}\end{bmatrix}=\begin{bmatrix} (1-\beta)\varepsilon_{t}+\eta_{t} \\ \eta_{t}+\varepsilon_{t}-\varepsilon_{t-1} \end{bmatrix}
+  $$
+    
+    From this form, it would be natural to represent using matrix notation:
+    
+    $$
+    \mathbf{\Delta}_t = \mathbf{\Psi}_0\mathbf{u}_t+ \mathbf{\Psi}_1\mathbf{u}_{t-1}
+    $$
+      
+      Where
+    $$
+      \mathbf{\Psi}_0=\begin{bmatrix}(1-\beta) &1\\ 1 & 1 \end{bmatrix}, \mathbf{\Psi}_1=\begin{bmatrix}0 & 0 \\
+      -1 & 0 \\ \end{bmatrix},\mathbf{u}_t\sim WN\left(\mathbf{0},\begin{bmatrix}\sigma_\varepsilon^2 & 0\\ 0 & \sigma_\eta^2\end{bmatrix}\right)
+      $$
+        
+        Which is a rather simple vector moving average equation, but it still suffers
+      from an identification problem because it has 8 parameters including some on the
+      contemporaneous shocks. One way to take care that is to redefine the contemporaneous
+      shocks so that they're no longer orthogonal but there is no longer a $\mathbf{\Psi}_0$ matrix.
 
 Defining $\mathbf{e}_t\equiv\mathbf{\Psi}_0 \mathbf{u}_t$, linearity of the normal family
 shows that:
@@ -448,8 +450,8 @@ $$
 &\sim WN\left(\mathbf{0},\begin{bmatrix}(1-\beta)^2\sigma_\varepsilon^2+\sigma_\eta^2 &(1-\beta)\sigma_\varepsilon^2+\sigma_\eta^2\\ (1-\beta)\sigma_\varepsilon^2+\sigma_\eta^2 & \sigma_\varepsilon^2+\sigma_\eta^2 \end{bmatrix}\right)
 \end{aligned}
 $$
-
-and that we solve for last period's shocks:
+  
+  and that we solve for last period's shocks:
 
 $$
 \mathbf{e}_{t-1}=\mathbf{\Psi}_0\mathbf{u}_{t-1}\implies \mathbf{u}_{t-1}=\mathbf{\Psi}_0^{-1}\mathbf{e}_{t-1}
@@ -502,9 +504,8 @@ $$
 
 ## 3. Simulation Exercise
 
-The code and results below show that even after 10,000 simulations the model
-fails to converge to parameters given above. This is likely because the $\tilde{\mathbf{\Psi}}_1$
-matrix is singular which makes it hard to identify all of the relevant parameters.
+Below I simulate 10,000 steps of the simulation using the VMA(1) form discussed
+in the previous question (and correctly handling the correlated random draws).
 
 ```{r}
 capT = 10e3
@@ -512,24 +513,36 @@ beta = .99
 sigma_e = .05
 sigma_h = .05
 
-e_draws <- rnorm(capT)*sigma_e
-h_draws <- rnorm(capT)*sigma_h
+# Covariance structure of the VMA representation
+# this is not the standard deviations
+Sigma = matrix(c((1-beta)^2*sigma_e^2 + sigma_h^2, (1-beta)*sigma_e^2 + sigma_h^2,
+                 (1-beta)*sigma_e^2 + sigma_h^2, sigma_e^2 + sigma_h^2), 
+               byrow = T, nrow = 2)
 
-rand_mat <- cbind(e = e_draws, h = h_draws)
-v_mat <- matrix(nrow = nrow(rand_mat), ncol = 2)
+Psy_tilde = matrix(c(0,0,
+               1/beta,-1/beta), byrow = T, nrow = 2)
+# generate shocks
+e_draws <- mvtnorm::rmvnorm(capT, mean = c(0,0), sigma = Sigma)
+
+# initialize matrices for output
+v_mat <- matrix(nrow = nrow(e_draws), ncol = 2)
 colnames(v_mat) <- c("Delta c","Delta y")
 
 for (i in 1:capT){
   if (i == 1){
-    rand_last <- c(e = 0, h = 0)
-  }else{
-    rand_last <- rand_mat[i-1,]
-  }
-  
-  rand_cur <- rand_mat[i,]
-  
-  v_mat[i, 'Delta c'] <- (1-beta)*rand_cur['e']+rand_cur['h']
-  v_mat[i, 'Delta y'] <- rand_cur['h'] + rand_cur['e'] - rand_last['e']
+    # if first observation, treat last period's shocks as 0
+e_tm1 <- c(e = 0, h = 0) |> matrix(ncol = 1)
+}else{
+  # otherwise just get shocks from last period
+  e_tm1 <- e_draws[i-1,] |> matrix(ncol = 1)
+}
+
+# get current shocks
+e_t <- e_draws[i,] |> matrix(ncol = 1)
+
+v = e_t + Psy_tilde%*%e_tm1
+
+v_mat[i,] <- t(v)
 }
 
 library(ggplot2)
@@ -541,26 +554,61 @@ ggplot()+
 
 ```
 
+Now I'll compute a misspecified VAR(5) model and compare its IRFs to compare them
+to the true values. To quickly recap, note that our structural VAR equations were
+of the form
+
+$$
+\mathbf{\Delta}_t = \mathbf{\Psi}_0\mathbf{u}_t+ \mathbf{\Psi}_1\mathbf{u}_{t-1}
+$$
+
+Where
+$$
+\mathbf{\Psi}_0=\begin{bmatrix}(1-\beta) &1\\ 1 & 1 \end{bmatrix}, \mathbf{\Psi}_1=\begin{bmatrix}0 & 0 \\
+-1 & 0 \\ \end{bmatrix},\mathbf{u}_t\sim WN\left(\mathbf{0},\begin{bmatrix}\sigma_\varepsilon^2 & 0\\ 0 & \sigma_\eta^2\end{bmatrix}\right)
+$$
+
+So the true (causal) impulse responses would be given by:
+
+$$
+\frac{\partial\mathbf{\Delta}_{t+0}}{\partial \mathbf{u}}=\begin{bmatrix}(1-\beta) &1\\ 1 & 1 \end{bmatrix}, 
+\frac{\partial\mathbf{\Delta}_{t+1}}{\partial \mathbf{u}}=\begin{bmatrix}0 &0\\ -1 & 1 \end{bmatrix},
+\frac{\partial\mathbf{\Delta}_{t+j}}{\partial \mathbf{u}}=\begin{bmatrix}0 &0\\ 0 & 0 \end{bmatrix},
+$$
+For all $j\geq 2$. 
+
+So of interest to us is the IRFs for $\Delta c_{t}$, so those should be in terms
+of $\Delta c_{t}$, $(1-\beta), 1,$ then zero afterwards. And then for $y$, $1$ in
+the first period, then zero afterwards.
+
+After implementing the VAR, I'll take a shortcut and use the `vars` package's
+off-the-shelf IRF function. And compare it to the patterns above
+
 ```{r unrestricted-VAR}
-library(MTS)
-m2=VARMA(v_mat,p=0,q=1,include.mean=FALSE)
+# estimate a var with no trend component
+my_p = 5
+m2=vars::VAR(v_mat, p = my_p, type = "none")
 
-coef_target <- matrix(c(0, 0, 1/beta, -1/beta), nrow=2, byrow = T)
-
-
-sigma_target <- matrix(c(
-  (((1-beta)^2)*(sigma_e^2))+(sigma_h^2), ((1-beta)*(sigma_e^2))+(sigma_h^2),
-  ((1-beta)*(sigma_e^2))+(sigma_h^2), (sigma_e^2)+(sigma_h^2)
-  ), byrow = T, nrow = 2)
+m2_irf <- vars::irf(m2, ortho = F)$irf$Delta.c
+true_irf_c <- c(1-beta, 1, rep(0, nrow(m2_irf)-2))
+true_irf_y <- c(1, rep(0, nrow(m2_irf)-1))
 ```
 
-```{r, echo = F}
-message("Pct Error in Coefs ")
-((coef_target/m2$coef)-1)*100
-
-message("Pct Error in Sigma Matrix ")
-((sigma_target/m2$Sigma)-1)*100
+```{r plot-irfs, echo = F}
+ggplot()+
+  geom_line(aes(x=0:(nrow(m2_irf)-1), y=true_irf_c, linetype = "True IRF", col = "Transitory"))+
+  geom_line(aes(x=0:(nrow(m2_irf)-1), y=m2_irf[,'Delta.c'], linetype = "Estimated IRF", col = "Transitory"))+
+  geom_line(aes(x=0:(nrow(m2_irf)-1), y=true_irf_y, linetype = "True IRF", col = "Permanent"))+
+  geom_line(aes(x=0:(nrow(m2_irf)-1), y=m2_irf[,'Delta.y'], linetype = "Estimated IRF", col = "Permanent")) +
+  ggtitle("Impulse Response of Consumption to Transitory & Permanent Shocks")+
+  xlab("Time Since Shock")+
+  ylab("Change in Consumption")
 ```
+
+It's actually relatively close to the true IRFs. We also ran this with $p=50$,
+and then the IRFs are indistinguishable. To get even closer we could
+use Cholesky decomposition giving precedent to the $\varepsilon$ shocks since
+they are completely exogenous.
 
 # The Kalman Filter
 
