@@ -906,6 +906,18 @@ plot(y_sim, type = "l", col = "blue", lwd = 2,
 
 ## 6. Implementing the Kalman Filter
 
+Letting $v_i = y_i - A\hat{z}_{i|i-1}$ be the prediction error of the Kalman filter and $F_i := \mathbb{E}[v_i^2 \mid Y^{i-1}] = AP_{i|i-1}A'$ be the forecast variance, the Kalman filter likelihood is given by
+$$
+p_\text{KF}(\mathcal{I}^t) = \prod_{i=1}^t \frac{1}{\sqrt{2\pi F_i}} \exp\left( -\frac{v_i^2}{2F_i} \right)
+$$
+The analytical expression from part 3 is
+$$
+p_\text{A}(\mathcal{I}^t \mid y_0, \varepsilon_0) = \prod_{i=1}^t \frac{1}{\sqrt{2\pi \sigma^2}} \exp\left( -\frac{\varepsilon_i^2}{2\sigma^2} \right)
+$$
+Comparing the two, we see that $v_i$ and $F_i = \mathbb{E}[v_i^2 \mid Y^{i-1}]$ are the Kalman equivalent of $\varepsilon_i$ and $\sigma^2 = \mathbb{E}[\varepsilon_i^2]$, respectively. This makes sense because the prediction error $v_i$ can be thought of as the Kalman filter's estimate of the shock $\varepsilon_i$ at time $i$, and so the forecast variance $F_i$ can be thought of as the Kalman filter's estimate of the variance of that shock.
+
+For our simulated data, the log-likelihood computed by the Kalman filter is very close to that computed by the analytical expression derived in part 3 (respectively, $-209.5759$ and $-209.3769$). Since the Kalman estimates of $y_t$ and $\varepsilon_t$ are essential exact matches to the simulated data (as discussed in part 7), it makes sense that the log-likelihoods are also very close.
+
 ```{r}
 kalmanFilter <- function(y, theta) {
   # ************************************************************************ #
@@ -970,6 +982,30 @@ kalmanFilter <- function(y, theta) {
 }
 ```
 
+```{r}
+logLik_analytical <- function(y, eps, theta, y0, eps0) {
+  # ************************************************************************ #
+  # Evaluates the log-likelihood of the data given the shocks, 
+  # using the analytical expression derived in part 3.
+  #
+  # Inputs:
+  #   y: vector of observed data (length t)
+  #   eps: vector of shocks (length t)
+  #   theta: model parameters phi, gamma1, sig2
+  #   y0, eps0: initial values of y_0 and eps_0
+  #
+  # Output:
+  #   log_lik: log-likelihood of data given eps
+  # ************************************************************************ #
+  
+  t <- length(y)
+  sig2 <- theta[3]
+  log_lik <- -0.5 * t * log(2 * pi * sig2) - (1 / (2 * sig2)) * sum(eps^2)
+  return(log_lik)
+}
+```
+
+
 ## 7. Applying the Kalman Filter
 
 For $y_t$#, the Kalman filter estimates exactly match the observed values. In our state space representation, the observation equation $y_t = Az_t$ has no noise term, so the data is perfectly informative about the latent state and the filter perfectly recovers the $y_t$ component of the state vector. 
@@ -982,6 +1018,10 @@ kf_result <- kalmanFilter(y_sim, theta)
 s_est <- kf_result$s
 P_est <- kf_result$P
 logLik <- kf_result$logLik
+logLik_analytical <- logLik_analytical(y_sim, eps_sim, theta, y0 = 0, eps0 = 0)
+cat("Kalman Filter Log-Likelihood:", logLik, "\n",
+    "Analytical Log-Likelihood:", logLik_analytical, "\n",
+    sep = "")
 
 # Plot state estimates alongside data
 plot(y_sim, type = "l", col = "blue", lwd = 2,
