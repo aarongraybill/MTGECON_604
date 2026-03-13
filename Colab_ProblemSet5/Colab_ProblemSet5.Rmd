@@ -639,15 +639,15 @@ y_t &= \phi L y_{t} + \varepsilon_t+\gamma L \varepsilon_{t}\\
 \end{aligned}
 $$
 
-The multiplicative inverse of $(1-\phi L)$ is $(1+\phi L+\phi^2 L^2-\ldots)$, and 
+The multiplicative inverse of $(1-\phi L)$ is $(1+\phi L+\phi^2 L^2+\ldots)$, and 
 so we can alternately express the ARMA process as an MA($\infty$):
 
 $$
 \begin{aligned}
-(1+\phi L+\phi^2 L^2-\ldots)(1-\phi L)y_t &= (1+\phi L+\phi^2 L^2-\ldots)(1+\gamma L) \varepsilon_{t}\\
-y_t&=(1+\phi L+\phi^2 L^2-\ldots)(1+\gamma L) \varepsilon_{t}\\
-&=[(1+\phi L+\phi^2 L^2-\ldots) + (\gamma L+\gamma\phi L+\gamma\phi^2 L^2+\ldots)]\varepsilon_{t} \\
-&=[\underbrace{1}_{\psi_0}+\underbrace{\phi^0(\phi+\gamma)}_{\psi_1}L-\underbrace{\phi^1(\phi+\gamma)}_{\psi_2}L^2-\underbrace{\phi^2(\phi+\gamma)}_{\psi_3}L^3+\ldots]\varepsilon_{t}\\
+(1+\phi L+\phi^2 L^2-\ldots)(1-\phi L)y_t &= (1+\phi L+\phi^2 L^2+\ldots)(1+\gamma L) \varepsilon_{t}\\
+y_t&=(1+\phi L+\phi^2 L^2+\ldots)(1+\gamma L) \varepsilon_{t}\\
+&=[(1+\phi L+\phi^2 L^2+\phi^3L^3\ldots) + (\gamma L+\gamma\phi L^2+\gamma\phi^2 L^3+\ldots)]\varepsilon_{t} \\
+&=[\underbrace{1}_{\psi_0}+\underbrace{\phi^0(\phi+\gamma)}_{\psi_1}L+\underbrace{\phi^1(\phi+\gamma)}_{\psi_2}L^2+\underbrace{\phi^2(\phi+\gamma)}_{\psi_3}L^3+\ldots]\varepsilon_{t}\\
 &=\psi(L)\varepsilon_t
 \end{aligned}
 $$
@@ -671,7 +671,12 @@ E[y_t]&=E\left[[1+\phi^0(\phi+\gamma)L+\phi^1(\phi+\gamma)L^2+\phi^2(\phi+\gamma
 &= 0
 \end{aligned}
 $$
+From above, define $\psi_j$ to be
+$$\psi_j = \begin{cases}
+1 &\text{if } j = 0\\
+(\phi + \gamma) \phi^{j-1} &\text{if } j > 0
 
+\end{cases}$$
 The variance of any $MA(\infty)$ process is given by:
 
 $$
