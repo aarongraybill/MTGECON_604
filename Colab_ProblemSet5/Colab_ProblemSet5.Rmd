@@ -861,6 +861,8 @@ matrix before $\xi_t$.
 
 ## 5. Simulation
 
+Yes, this process is covariance stationary because $\phi = 0.9 < 1$, which was sufficient to get the geometric series to converge from part 1 of the problem.
+
 ```{r}
 # Parameters
 phi <- 0.9
