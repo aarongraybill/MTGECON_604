@@ -12,7 +12,7 @@ header-includes:
   - \usepackage{amsmath}
 ---
 
-### REMEMBER TO GO TO CHUNK "lots-of-simulation-be-patient" AND CHANGE N TO 500000
+
 
 ```{r setup, include=FALSE}
 rm(list=ls())  # clear environment
@@ -37,12 +37,18 @@ set.seed(seed_number)
 
 ## Exercise 3.1
 Is the following MA(2) process covariance-stationary? If so, calculate its autocovariances.
-$$Y_t=(1+2.4L+0.8L^2)\varepsilon_t$$
-$$\mathbb{E}[\varepsilon_t \varepsilon_{\tau}]=
+
+$$
+Y_t=(1+2.4L+0.8L^2)\varepsilon_t
+$$
+
+$$
+\mathbb{E}[\varepsilon_t \varepsilon_{\tau}]=
 \begin{cases}
 1 & \text{for }t=\tau \\
 0 & \text{otherwise}
-\end{cases}$$
+\end{cases}
+$$
 
 **Solution:**
 We check the conditions for stationarity. First, we take $\varepsilon_t \sim WN(0, 1)$.
@@ -123,40 +129,51 @@ $$
 $$
 
 We find the eigenvalues of $\mathbf{F}$ by solving
-$$\begin{aligned}
+
+$$
+\begin{aligned}
 \det \begin{pmatrix} 1.1 - \lambda & -0.18 \\ 1 &-\lambda\end{pmatrix} &=  0 \\
 -1.1 \lambda + \lambda^2 + 0.18 &= 0\\ 
 \lambda^2 - 1.1 \lambda + 0.18 &=  0 \\ 
 (\lambda - 0.9)(\lambda - 0.2) &=  0.
-\end{aligned}$$
+\end{aligned}
+$$
 
 Therefore, the two eigenvalues are $\lambda_1 = 0.2$ and $\lambda_2 = 0.9$. Since both eigenvalues have absolute value less than $1$, the process is covariance-stationary.
 
 Next, we calculate the autocovariances. If we follow the approach outlined in the section notes, the algebra becomes quite tedious, so we use the Yule-Walker algorithm instead, which is much cleaner to implement. We start with the AR(2) process and multiple the equation by $Y_t$ and take the expectation:
 
-From $$
+From 
+
+$$
 \begin{aligned}
 Y_t = 1.1Y_{t-1} - 0.18Y_{t-2} + \varepsilon_t & \Rightarrow Y_tY_t = 1.1Y_{t-1}Y_t - 0.18Y_{t-2}Y_t + \varepsilon_tY_t \\ 
 & \Rightarrow \underbrace{\mathbb{E}[Y_tY_t]}_{\gamma_0} = 1.1 \underbrace{\mathbb{E}[Y_{t-1}Y_t]}_{\gamma_1} - 0.18\underbrace{\mathbb{E}[Y_{t-2}Y_t]}_{\gamma_2} + \underbrace{\mathbb{E}[\varepsilon_tY_t]}_{=1} \\
 & \Rightarrow \gamma_0 = 1.1\gamma_1 - 0.18\gamma_2 + 1,
 \end{aligned}
-$$ where $\mathbb{E}[\varepsilon_tY_t]$ is equal to 1 because today's shock $\varepsilon_t$ is perfectly correlated with today's value $Y_t$ by a factor of its own variance $\sigma^2 = 1$.
+$$ 
+
+where $\mathbb{E}[\varepsilon_tY_t]$ is equal to 1 because today's shock $\varepsilon_t$ is perfectly correlated with today's value $Y_t$ by a factor of its own variance $\sigma^2 = 1$.
 
 Next, we multiply our process by $Y_{t-1}$:
 
 $$
 \begin{aligned}
-\begin{aligned}
 Y_t = 1.1Y_{t-1} - 0.18Y_{t-2} + \varepsilon_t & \Rightarrow Y_tY_{t-1} = 1.1Y_{t-1}Y_{t-1} - 0.18Y_{t-2}Y_{t-1} + \varepsilon_tY_{t-1} \\ 
 & \Rightarrow \underbrace{\mathbb{E}[Y_tY_{t-1}]}_{\gamma_1} = 1.1 \underbrace{\mathbb{E}[Y_{t-1}Y_{t-1}]}_{\gamma_0} - 0.18\underbrace{\mathbb{E}[Y_{t-2}Y_{t-1}]}_{\gamma_1} + \underbrace{\mathbb{E}[\varepsilon_tY_{t-1}]}_{=0} \\
 & \Rightarrow \gamma_1 = 1.1\gamma_0 - 0.18\gamma_1,
 \end{aligned}
-\end{aligned}
-$$ where $\mathbb{E}[\varepsilon_tY_{t-1}]$ is equal to 0 because today's shock $\varepsilon_t$ hasn't happened at time $t-1$, so it has zero correlation with $Y_{t-1}$.
+$$ 
+
+where $\mathbb{E}[\varepsilon_tY_{t-1}]$ is equal to 0 because today's shock $\varepsilon_t$ hasn't happened at time $t-1$, so it has zero correlation with $Y_{t-1}$.
 
 Finally, we multiply our process by $Y_{t-2}$:
 
-$$ \begin{aligned} \begin{aligned} Y_t = 1.1Y_{t-1} - 0.18Y_{t-2} + \varepsilon_t & \Rightarrow Y_tY_{t-2} = 1.1Y_{t-1}Y_{t-2} - 0.18Y_{t-2}Y_{t-2} + \varepsilon_tY_{t-2} \\  & \Rightarrow \underbrace{\mathbb{E}[Y_tY_{t-2}]}_{\gamma_2} = 1.1 \underbrace{\mathbb{E}[Y_{t-1}Y_{t-2}]}_{\gamma_1} - 0.18\underbrace{\mathbb{E}[Y_{t-2}Y_{t-2}]}_{\gamma_0} + \underbrace{\mathbb{E}[\varepsilon_tY_{t-2}]}_{=0} \\ & \Rightarrow \gamma_2 = 1.1\gamma_1 - 0.18\gamma_0, \end{aligned} \end{aligned} $$ where $\mathbb{E}[\varepsilon_tY_{t-2}]$ is equal to 0 because today's shock $\varepsilon_t$ hasn't happened at time $t-2$, so it has zero correlation with $Y_{t-1}$.
+$$
+\begin{aligned} \begin{aligned} Y_t = 1.1Y_{t-1} - 0.18Y_{t-2} + \varepsilon_t & \Rightarrow Y_tY_{t-2} = 1.1Y_{t-1}Y_{t-2} - 0.18Y_{t-2}Y_{t-2} + \varepsilon_tY_{t-2} \\  & \Rightarrow \underbrace{\mathbb{E}[Y_tY_{t-2}]}_{\gamma_2} = 1.1 \underbrace{\mathbb{E}[Y_{t-1}Y_{t-2}]}_{\gamma_1} - 0.18\underbrace{\mathbb{E}[Y_{t-2}Y_{t-2}]}_{\gamma_0} + \underbrace{\mathbb{E}[\varepsilon_tY_{t-2}]}_{=0} \\ & \Rightarrow \gamma_2 = 1.1\gamma_1 - 0.18\gamma_0, \end{aligned} \end{aligned} 
+$$ 
+
+where $\mathbb{E}[\varepsilon_tY_{t-2}]$ is equal to 0 because today's shock $\varepsilon_t$ hasn't happened at time $t-2$, so it has zero correlation with $Y_{t-1}$.
 
 Now, we have 3 equations and 3 unknowns:
 
@@ -166,30 +183,42 @@ $$
 \gamma_1 &= 1.1\gamma_0 - 0.18\gamma_1 \\ 
 \gamma_2 &= 1.1\gamma_1 - 0.18\gamma_0.
 \end{aligned}
-$$ The second equation implies $$
+$$ 
+
+The second equation implies 
+
+$$
 1.18\gamma_1 = 1.1\gamma_0
 \quad\Rightarrow\quad
 \gamma_1 \approx 0.932\,\gamma_0.
-$$ The third equation implies
+$$
+
+The third equation implies
 
 $$
 \gamma_2 = 1.1 \gamma_1 - 0.18\gamma_0 \Rightarrow \gamma_2 =  1.1(0.932\gamma_0) - 0.18\gamma_0
 \approx 0.845\,\gamma_0.
 $$
 
-Substituting $\gamma_1 \approx 0.932\gamma_0$ and $\gamma_2 \approx 0.845\gamma_0$ into the first equation implies $$
+Substituting $\gamma_1 \approx 0.932\gamma_0$ and $\gamma_2 \approx 0.845\gamma_0$ into the first equation implies 
+
+$$
 \gamma_0 = 1.1(0.932\gamma_0) - 0.18(0.845\gamma_0) + 1
 \quad\Rightarrow\quad
 \gamma_0 \approx 7.89.
 $$
 
-Hence $$
+Hence 
+
+$$
 \gamma_1 \approx 0.932(7.89) \approx 7.35,
 \qquad
 \gamma_2 \approx 0.845(7.89) \approx 6.67.
 $$
 
-For $k\geq 3$: $$
+For $k\geq 3$: 
+
+$$
 \gamma_k = 1.1\gamma_{k-1} - 0.18\gamma_{k-2}.
 $$
 
@@ -257,6 +286,7 @@ that is due to $\varepsilon_{1,t+1}$ and $\varepsilon_{1,t+2}$.
 **Solution:**
 
 (a) This system is not covariance-stationary. We can rewrite it in vector form:
+
 $$
 \begin{bmatrix}
 Y_{1,t} \\ Y_{2,t} 
@@ -274,6 +304,7 @@ Y_{2,t-1}
 \varepsilon_{2,t}
 \end{bmatrix}.
 $$
+
 The eigenvalues of the $\Pi$ matrix (coefficient on $Y_{t-1}$) are found by setting the determinant of $\Pi-\lambda I$ to be 0; we get $(0.3-\lambda)(0.4-\lambda)-0.8*0.9$, yielding the eigenvalues of 1.2 and -0.5. One eigenvalue of $\pi$ (the companion form) is outside of the unit circle, meaning that this bivariate VAR process is not covariance-stationary.
 
 (b) We consider $\Psi_s=\frac{\partial y_{t+s}}{\partial \varepsilon_t'}$ for various values of $s$.
@@ -300,6 +331,7 @@ y_t &= \Pi y_{t-1} + \varepsilon_t \Rightarrow y_{t+1} = \Pi[\Pi y_{t-1}+\vareps
 \frac{\partial y_{t+1}}{\partial \varepsilon_t'} &= \Pi = \begin{bmatrix} 0.3 & 0.8 \\ 0.9 & 0.4 \end{bmatrix}
 \end{aligned}
 $$
+
 * When $s=2$: $\Psi_2=\frac{\partial y_{t+2}}{\partial \varepsilon_t'}$. We can apply a similar recursion to find the proper coefficient on on $\varepsilon_t$ and show that
 
 $$
@@ -362,26 +394,27 @@ of all future periods. If $j=0$, then from period $t+1$'s perspective, $y_{t+1}$
 
 Noting that $x_{t+1}=x_t+\eta_{t+1}$ and $y_{t+1}=x_{t}+\eta_{t+1}+\varepsilon_{t+1}$, we see that:
   
-  $$
-  E_{t+1}[y_{t+j+1}]-E_t[y_{t+j+1}]=
-  \begin{cases}
+$$
+E_{t+1}[y_{t+j+1}]-E_t[y_{t+j+1}]=
+\begin{cases}
 x_{t}+\eta_{t+1}+\varepsilon_{t+1} - x_t & j=0 \\
 x_t+\eta_{t+1}-x_t & j \geq 1
 \end{cases}
 $$
   
-  Which obviously simplifies to:
+Which obviously simplifies to:
   
-  $$
-  E_{t+1}[y_{t+j+1}]-E_t[y_{t+j+1}]=\begin{cases}
+$$
+E_{t+1}[y_{t+j+1}]-E_t[y_{t+j+1}]=\begin{cases}
 \eta_{t+1}+\varepsilon_{t+1}& j=0 \\
 \eta_{t+1} & j \geq 1
 \end{cases}
 $$
-  With that in mind, we can conveniently express $\Delta c_{t+1}\equiv c_{t+1}-c_{t}$ as:
+
+With that in mind, we can conveniently express $\Delta c_{t+1}\equiv c_{t+1}-c_{t}$ as:
   
-  $$
-  \begin{aligned}
+$$
+\begin{aligned}
 \Delta c_{t+1}&=(1-\beta)\sum_{j=0}^\infty\beta^j\left( E_{t+1}[y_{t+j+1}]-E_t[y_{t+j+1}]\right)\\
 &=(1-\beta)\beta^0\left( E_{t+1}[y_{t+0+1}]-E_t[y_{t+0+1}]\right)+(1-\beta)\sum_{j=1}^\infty\beta^j\left( E_{t+1}[y_{t+j+1}]-E_t[y_{t+j+1}]\right)\\
 &=(1-\beta)\left( \eta_{t+1}+\varepsilon_{t+1}\right)+(1-\beta)\sum_{j=1}^\infty\beta^j\eta_{t+1}\\
@@ -393,18 +426,18 @@ $$
 \end{aligned}
 $$
   
-  If we define $u_{t}=(1-\beta)\varepsilon_{t+1}+\eta_{t+1}\sim\mathcal{N}(0,(1-\beta)^2\sigma_\varepsilon^2+\sigma_\eta^2)$, then we can think of $\Delta c_{t}$ as white noise process with mean 0 and variance: $(1-\beta)^2\sigma_\varepsilon^2+\sigma_\eta^2)$.
+If we define $u_{t}=(1-\beta)\varepsilon_{t+1}+\eta_{t+1}\sim\mathcal{N}(0,(1-\beta)^2\sigma_\varepsilon^2+\sigma_\eta^2)$, then we can think of $\Delta c_{t}$ as white noise process with mean 0 and variance: $(1-\beta)^2\sigma_\varepsilon^2+\sigma_\eta^2)$.
 
 From this, it is clear to see that the IRFs and autocovariances for all $j\neq 0$
-  will be zero. There is absolutely no information passed between periods (at least
-                                                                           for the per-period change in consumption).
+will be zero. There is absolutely no information passed between periods (at least
+for the per-period change in consumption).
 
 If $j=0$, then we have already expressed the variance as $(1-\beta)^2\sigma_\varepsilon^2+\sigma_\eta^2)$ Clearly, these are increasing in the variances of the primitives. But interesting as the agent
 becomes more patient ($\beta\to 1$), the variance in consumption reduces to only variance
 in the permanent component (because people no longer respond to the transitory shocks.)
 
 And the IRFs are simply the partials with respect to $\varepsilon$ which is $(1-\beta)$
-  and for $\eta$ which is $1$.
+and for $\eta$ which is $1$.
 
 Assuming $\beta\in (0,1)$ (people strictly discount the future), then the magnitude
 of a transitory shock on the change in consumption is less than the same sized shock
@@ -417,38 +450,36 @@ approaches zero (little change to previous period consumption).
 Noting that 
 
 $$
-  \begin{aligned}
+\begin{aligned}
 \Delta y_{t+1}&=(x_{t+1}+\varepsilon_{t+1})-(x_{t}+\varepsilon_{t}) \\
 &=(x_t+\eta_{t+1}+\varepsilon_{t+1})-(x_{t}+\varepsilon_{t})\\
-&=\eta_{t+1}+\varepsilon_{t+1}-\varepsilon_{t}%\\
-%&=\eta_{t+1}+\varepsilon_{t+1}-\varepsilon_{t}+\beta\varepsilon_{t+1}-\beta\varepsilon_{t+1}\\
-%&=\eta_{t+1}+\varepsilon_{t+1}-\varepsilon_{t}+\beta\varepsilon_{t+1}-\beta\varepsilon_{t+1}\\
-%&=\underbrace{\eta_{t+1}+(1-\beta)\varepsilon_{t+1}}_{\Delta %c_{t+1}}-\varepsilon_{t}+\beta\varepsilon_{t+1}\\
+&=\eta_{t+1}+\varepsilon_{t+1}-\varepsilon_{t}
 \end{aligned}
 $$
   
-  Decrementing the indices by one period, we can see that:
+Decrementing the indices by one period, we can see that:
   
-  $$
-  \begin{bmatrix}\Delta c_{t}\\ \Delta y_{t}\end{bmatrix}=\begin{bmatrix} (1-\beta)\varepsilon_{t}+\eta_{t} \\ \eta_{t}+\varepsilon_{t}-\varepsilon_{t-1} \end{bmatrix}
-  $$
+$$
+\begin{bmatrix}\Delta c_{t}\\ \Delta y_{t}\end{bmatrix}=\begin{bmatrix} (1-\beta)\varepsilon_{t}+\eta_{t} \\ \eta_{t}+\varepsilon_{t}-\varepsilon_{t-1} \end{bmatrix}
+$$
     
-    From this form, it would be natural to represent using matrix notation:
+From this form, it would be natural to represent using matrix notation:
     
-    $$
-    \mathbf{\Delta}_t = \mathbf{\Psi}_0\mathbf{u}_t+ \mathbf{\Psi}_1\mathbf{u}_{t-1}
-    $$
+$$
+\mathbf{\Delta}_t = \mathbf{\Psi}_0\mathbf{u}_t+ \mathbf{\Psi}_1\mathbf{u}_{t-1}
+$$
       
-      Where
-    $$
-      \mathbf{\Psi}_0=\begin{bmatrix}(1-\beta) &1\\ 1 & 1 \end{bmatrix}, \mathbf{\Psi}_1=\begin{bmatrix}0 & 0 \\
-      -1 & 0 \\ \end{bmatrix},\mathbf{u}_t\sim WN\left(\mathbf{0},\begin{bmatrix}\sigma_\varepsilon^2 & 0\\ 0 & \sigma_\eta^2\end{bmatrix}\right)
-      $$
+Where
+
+$$
+\mathbf{\Psi}_0=\begin{bmatrix}(1-\beta) &1\\ 1 & 1 \end{bmatrix}, \mathbf{\Psi}_1=\begin{bmatrix}0 & 0 \\
+-1 & 0 \\ \end{bmatrix},\mathbf{u}_t\sim WN\left(\mathbf{0},\begin{bmatrix}\sigma_\varepsilon^2 & 0\\ 0 & \sigma_\eta^2\end{bmatrix}\right)
+$$
         
-        Which is a rather simple vector moving average equation, but it still suffers
-      from an identification problem because it has 8 parameters including some on the
-      contemporaneous shocks. One way to take care that is to redefine the contemporaneous
-      shocks so that they're no longer orthogonal but there is no longer a $\mathbf{\Psi}_0$ matrix.
+  Which is a rather simple vector moving average equation, but it still suffers
+from an identification problem because it has 8 parameters including some on the
+contemporaneous shocks. One way to take care that is to redefine the contemporaneous
+shocks so that they're no longer orthogonal but there is no longer a $\mathbf{\Psi}_0$ matrix.
 
 Defining $\mathbf{e}_t\equiv\mathbf{\Psi}_0 \mathbf{u}_t$, linearity of the normal family
 shows that:
@@ -559,6 +590,7 @@ data_nolags <- data.frame(delY = delY, delC = delC)
 ```
 
 Now I'll estimate a VAR(5) model on the simulated model and compare its IRFs to the true values. To quickly recap, note that our structural VAR equations were of the form
+
 $$
 \mathbf{\Delta}_t = \mathbf{\Psi}_0\mathbf{u}_t+ \mathbf{\Psi}_1\mathbf{u}_{t-1}
 $$
@@ -576,8 +608,6 @@ $$
 for all $j\geq 2$.
 
 ```{r}
-# Estimate VAR(p) 
-
 p <- 5  # number of lags
 VARp_data <- data.frame(delY = delY, delC = delC) 
 for (i in 1:p) {
@@ -592,6 +622,7 @@ X <- as.matrix(VARp_data[, -c(1, 2)]) %>%
   cbind(1, .)  # t x (1+2p) matrix of intercept and p lags
 Phihat <- solve(t(X) %*% X) %*% t(X) %*% Y
 Sighat <- t(Y - X %*% Phihat) %*% (Y - X %*% Phihat) / t
+
 ```
 
 We consider two structural identification schemes: (1) Cholesky decomposition ordering $\Delta y_t$ before $\Delta c_t$, and (2) long-run restriction allowing for a permanent shock that can have a long-run effect on income levels and a transitory shock that has zero long-run effect on income levels. Our Cholesky ordering assumes that shocks to $\Delta y_t$ have an immediate effect on $\Delta y_t$ and $\Delta c_t$, but shocks to $\Delta c_t$ only have an immediate effect on $\Delta c_t$. This is reasonable as it assumes that consumption responds to news about permanent income immediately, but income does not contemporaneously respond to news about consumption. However, a shock to $\Delta y_t$ in the Cholesky decomposition is some mixture of the true permanent and transitory shocks (since $\Delta y_t = \eta_t + \epsilon_t - \epsilon_{t-1}$), so the IRFs from the Cholesky decomposition will not match the true IRFs. The long-run restriction model seeks to separately identify the permanent and transitory shocks by imposing the restriction that the transitory shock has no long-run effect on income levels. We would expect the IRFs from the long-run restriction model to match the true IRFs more closely than those from the Cholesky decomposition.
@@ -614,6 +645,8 @@ D <- (diag(2) - SumPhi) %*% A
 if (D[1, 1] < 0) D[, 1] <- -D[, 1]
 if (D[1, 2] < 0) D[, 2] <- -D[, 2]
 ```
+
+\newpage
 
 ```{r}
 compute_IRF <- function(Phihat, Hmax, method) {
@@ -743,6 +776,7 @@ plot_IRF(IRF_LR, Hmax, method = "Long Run Restriction")
 ```
 
 The IRFs compute the response of $\Delta y_{t+h}$ and $\Delta c_{t+h}$ to a one-standard-deviation shock. Since $\sigma_\eta^2 = \sigma_\varepsilon^2 = 0.05$, a one-standard-deviation shock is $\sqrt{0.05} \approx 0.224$ units. So we need to multiply our theoretical IRFs by 0.224 to compare them to the estimated IRFs. Recall from our theoretical analysis that the true IRFs should be
+
 $$
 \frac{\partial\Delta y_{t+h}}{\partial\eta_t} =
 \begin{cases}
@@ -766,7 +800,9 @@ $$
     0 & \text{if } h\ge1
 \end{cases}
 $$
+
 Since $\beta=0.99$ and accounting for the standard deviation scaling, we would expect the IRF to be
+
 $$
 IRF_{\Delta y, \eta}(h) =
 \begin{cases}
@@ -1377,7 +1413,7 @@ metropolisHastings <- function(y, theta_bar, Sigma, N = 100, c = 1) {
 
 ```{r lots-of-simulation-be-patient}
 set.seed(seed_number)
-N <- 10000  # CHANGE TO 500000 BEFORE SUBMITTING
+N <- 1000  # CHANGE TO 500000 BEFORE SUBMITTING
 MHdraws <- metropolisHastings(y_sim, theta_bar, Sigma, N = N, c = 2)
 ```
 
