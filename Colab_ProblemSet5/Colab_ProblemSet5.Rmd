@@ -778,7 +778,8 @@ plot_IRF(IRF_LR, Hmax, method = "Long Run Restriction")
 The IRFs compute the response of $\Delta y_{t+h}$ and $\Delta c_{t+h}$ to a one-standard-deviation shock. Since $\sigma_\eta^2 = \sigma_\varepsilon^2 = 0.05$, a one-standard-deviation shock is $\sqrt{0.05} \approx 0.224$ units. So we need to multiply our theoretical IRFs by 0.224 to compare them to the estimated IRFs. Recall from our theoretical analysis that the true IRFs should be
 
 $$
-\frac{\partial\Delta y_{t+h}}{\partial\eta_t} =
+\begin{aligned}
+&\frac{\partial\Delta y_{t+h}}{\partial\eta_t} =
 \begin{cases}
     1 & \text{if } h=0 \\
     0 & \text{if } h\ge1
@@ -788,8 +789,8 @@ $$
     1 & \text{if } h=0 \\
     -1 & \text{if } h=1 \\
     0 & \text{if } h\ge2
-\end{cases}, \quad
-\frac{\partial\Delta c_{t+h}}{\partial\eta_t} =
+\end{cases}, \\
+&\frac{\partial\Delta c_{t+h}}{\partial\eta_t} =
 \begin{cases}
     1 & \text{if } h=0 \\
     0 & \text{if } h\ge1
@@ -799,12 +800,14 @@ $$
     1-\beta & \text{if } h=0 \\
     0 & \text{if } h\ge1
 \end{cases}
+\end{aligned}
 $$
 
 Since $\beta=0.99$ and accounting for the standard deviation scaling, we would expect the IRF to be
 
 $$
-IRF_{\Delta y, \eta}(h) =
+\begin{aligned}
+&IRF_{\Delta y, \eta}(h) =
 \begin{cases}
     0.224 & \text{if } h=0 \\
     0 & \text{if } h\ge1
@@ -814,8 +817,8 @@ IRF_{\Delta y, \varepsilon}(h) =
     0.224 & \text{if } h=0 \\
     -0.224 & \text{if } h=1 \\
     0 & \text{if } h\ge2
-\end{cases}, \quad
-IRF_{\Delta c, \eta}(h) =
+\end{cases}, \\
+&IRF_{\Delta c, \eta}(h) =
 \begin{cases}
     0.224 & \text{if } h=0 \\
     0 & \text{if } h\ge1
@@ -825,6 +828,7 @@ IRF_{\Delta c, \varepsilon}(h) =
     0.00224 & \text{if } h=0 \\
     0 & \text{if } h\ge1
 \end{cases}
+\end{aligned}
 $$
 It is hard to compare the Cholesky IRFs to the true IRFs because the Cholesky shocks are a mixture of the permanent and transitory shocks. However, the long-run restriction IRFs match very well. The one quirk is that the IRF of $\Delta c$ to the transitory shock is negative rather than positive. This could be due to $\beta$ being close to 1, which makes the transitory shock have a very small effect on consumption, so estimation error could lead to the wrong sign.
 
@@ -1344,12 +1348,20 @@ max_likelihood <- function(y) {
 }
 ```
 
+\newpage
+
 ```{r}
 # Estimate parameters using MLE
 mle_result <- max_likelihood(y_sim)
 
 theta_bar <- mle_result$theta_bar
 Sigma <- mle_result$Sigma
+```
+
+```{r, echo=FALSE}
+cat("\n","Parameter Point Estimate, theta_bar:", theta_bar,
+    "\n","Parameter Variance:\n")
+Sigma
 ```
 
 ## 2. Generating M-H Draws
