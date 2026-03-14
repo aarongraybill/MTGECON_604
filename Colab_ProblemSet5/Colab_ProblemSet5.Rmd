@@ -800,7 +800,7 @@ It is hard to compare the Cholesky IRFs to the true IRFs because the Cholesky sh
 # irf_cholesky <- irf(var_model, n.ahead = 10, ortho = TRUE, runs = 1000)
 # var_bq <- BQ(var_model)
 # irf_longrun <- irf(var_bq, n.ahead = 10,runs = 1000)
-
+# 
 # plot(irf_cholesky)
 # plot(irf_longrun)
 ```
@@ -856,14 +856,15 @@ E[y_t]&=E\left[[1+\phi^0(\phi+\gamma)L+\phi^1(\phi+\gamma)L^2+\phi^2(\phi+\gamma
 &= 0
 \end{aligned}
 $$
+
 From above, define $\psi_j$ to be
-$$\psi_j = \begin{cases}
+$$
+\psi_j = \begin{cases}
 1 &\text{if } j = 0\\
 (\phi + \gamma) \phi^{j-1} &\text{if } j > 0
-
-\end{cases}$$
+\end{cases}
+$$
 The variance of any $MA(\infty)$ process is given by:
-
 $$
 \begin{aligned}
 \gamma_0&=\sigma^2\sum_{j=0}^\infty \psi_j^2 \\
@@ -1318,7 +1319,7 @@ Sigma <- mle_result$Sigma
 ## 2. Generating M-H Draws
 
 ```{r}
-metropolisHastings <- function(y, theta_bar, Sigma, N = 10000, c = 1) {
+metropolisHastings <- function(y, theta_bar, Sigma, N = 100, c = 1) {
   # ************************************************************************ #
   # Implements Metropolis-Hastings algorithm.
   #
