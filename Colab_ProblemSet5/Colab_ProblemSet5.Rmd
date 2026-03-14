@@ -514,111 +514,296 @@ $$
 
 ## 3. Simulation Exercise
 
-Below I simulate 10,000 steps of the simulation using the VMA(1) form discussed
-in the previous question (and correctly handling the correlated random draws).
-
 ```{r}
-capT = 10e3
-beta = .99
-sigma_e = .05
-sigma_h = .05
-
-# Covariance structure of the VMA representation
-# this is not the standard deviations
-Sigma = matrix(c((1-beta)^2*sigma_e^2 + sigma_h^2, (1-beta)*sigma_e^2 + sigma_h^2,
-                 (1-beta)*sigma_e^2 + sigma_h^2, sigma_e^2 + sigma_h^2), 
-               byrow = T, nrow = 2)
-
-Psy_tilde = matrix(c(0,0,
-               1/beta,-1/beta), byrow = T, nrow = 2)
-# generate shocks
-e_draws <- mvtnorm::rmvnorm(capT, mean = c(0,0), sigma = Sigma)
-
-# initialize matrices for output
-v_mat <- matrix(nrow = nrow(e_draws), ncol = 2)
-colnames(v_mat) <- c("Delta c","Delta y")
-
-for (i in 1:capT){
-  if (i == 1){
-    # if first observation, treat last period's shocks as 0
-e_tm1 <- c(e = 0, h = 0) |> matrix(ncol = 1)
-}else{
-  # otherwise just get shocks from last period
-  e_tm1 <- e_draws[i-1,] |> matrix(ncol = 1)
+simulatePIM <- function(t, sigeps2, sigeta2, beta) {
+  # ************************************************************************ #
+  # Simulates data of length t according to the Permanent Income Model: 
+  #   Delta y_t = eta_t + eps_t - eps_{t-1}
+  #   Delta c_t = (1 - beta) * eps_t + eta_t
+  # where \epsilon_t ~ N(0, \sigma_eps^2) and \eta_t ~ N(0, \sigma_eta^2)
+  #
+  # Inputs:
+  #   t: length of time series to simulate
+  #   sigeps2, sigeta2: variances of transitory and permanent shocks
+  #   beta: discount factor
+  #
+  # Output: List
+  #   delY: vector of changes in income
+  #   delC: vector of changes in consumption
+  # ************************************************************************ #
+  
+  eps <- c(0, rnorm(t, mean = 0, sd = sqrt(sigeps2)))  # draw t transitory shocks
+  eta <- c(0, rnorm(t, mean = 0, sd = sqrt(sigeta2)))  # draw t permanent shocks
+  
+  delY <- eta[-1] + eps[-1] - eps[-(t+1)]  # Delta y_t = eta_t + eps_t - eps_{t-1}
+  delC <- (1 - beta) * eps[-1] + eta[-1]     # Delta c_t = (1 - beta) * eps_t + eta_t
+  
+  return(list(delY = delY, delC = delC))
 }
-
-# get current shocks
-e_t <- e_draws[i,] |> matrix(ncol = 1)
-
-v = e_t + Psy_tilde%*%e_tm1
-
-v_mat[i,] <- t(v)
-}
-
-library(ggplot2)
-ggplot()+
-  geom_point(aes(x=v_mat[,1], y = v_mat[,2], col = 1:capT), alpha = .2)+
-  labs(color = "Time",
-       x = "Delta c",
-       y = "Delta y")
-
 ```
 
-Now I'll compute a misspecified VAR(5) model and compare its IRFs to compare them
-to the true values. To quickly recap, note that our structural VAR equations were
-of the form
+```{r}
+# Simulate data
 
+set.seed(seed_number)
+t <- 10000
+sigeps2 <- 0.05
+sigeta2 <- 0.05
+beta <- 0.99
+
+pim_data <- simulatePIM(t, sigeps2, sigeta2, beta)
+delY <- pim_data$delY
+delC <- pim_data$delC
+
+data_nolags <- data.frame(delY = delY, delC = delC)
+```
+
+Now I'll estimate a VAR(5) model on the simulated model and compare its IRFs to the true values. To quickly recap, note that our structural VAR equations were of the form
 $$
 \mathbf{\Delta}_t = \mathbf{\Psi}_0\mathbf{u}_t+ \mathbf{\Psi}_1\mathbf{u}_{t-1}
 $$
-
-Where
+where
 $$
 \mathbf{\Psi}_0=\begin{bmatrix}(1-\beta) &1\\ 1 & 1 \end{bmatrix}, \mathbf{\Psi}_1=\begin{bmatrix}0 & 0 \\
 -1 & 0 \\ \end{bmatrix},\mathbf{u}_t\sim WN\left(\mathbf{0},\begin{bmatrix}\sigma_\varepsilon^2 & 0\\ 0 & \sigma_\eta^2\end{bmatrix}\right)
 $$
-
 So the true (causal) impulse responses would be given by:
-
 $$
 \frac{\partial\mathbf{\Delta}_{t+0}}{\partial \mathbf{u}}=\begin{bmatrix}(1-\beta) &1\\ 1 & 1 \end{bmatrix}, 
 \frac{\partial\mathbf{\Delta}_{t+1}}{\partial \mathbf{u}}=\begin{bmatrix}0 &0\\ -1 & 1 \end{bmatrix},
 \frac{\partial\mathbf{\Delta}_{t+j}}{\partial \mathbf{u}}=\begin{bmatrix}0 &0\\ 0 & 0 \end{bmatrix},
 $$
-For all $j\geq 2$. 
+for all $j\geq 2$.
 
-So of interest to us is the IRFs for $\Delta c_{t}$, so those should be in terms
-of $\Delta c_{t}$, $(1-\beta), 1,$ then zero afterwards. And then for $y$, $1$ in
-the first period, then zero afterwards.
+```{r}
+# Estimate VAR(p) 
 
-After implementing the VAR, I'll take a shortcut and use the `vars` package's
-off-the-shelf IRF function. And compare it to the patterns above
+p <- 5  # number of lags
+VARp_data <- data.frame(delY = delY, delC = delC) 
+for (i in 1:p) {
+  VARp_data <- VARp_data %>%
+    mutate(!!paste0("delY_lag", i) := lag(delY, n = i),
+           !!paste0("delC_lag", i) := lag(delC, n = i))
+}
+VARp_data <- VARp_data %>% drop_na()
 
-```{r unrestricted-VAR}
-# estimate a var with no trend component
-my_p = 5
-m2=vars::VAR(v_mat, p = my_p, type = "none")
-
-m2_irf <- vars::irf(m2, ortho = F)$irf$Delta.c
-true_irf_c <- c(1-beta, 1, rep(0, nrow(m2_irf)-2))
-true_irf_y <- c(1, rep(0, nrow(m2_irf)-1))
+Y <- as.matrix(VARp_data[, c(1, 2)])  # t x 2 matrix of delY_t, delC_t
+X <- as.matrix(VARp_data[, -c(1, 2)]) %>%
+  cbind(1, .)  # t x (1+2p) matrix of intercept and p lags
+Phihat <- solve(t(X) %*% X) %*% t(X) %*% Y
+Sighat <- t(Y - X %*% Phihat) %*% (Y - X %*% Phihat) / t
 ```
 
-```{r plot-irfs, echo = F}
-ggplot()+
-  geom_line(aes(x=0:(nrow(m2_irf)-1), y=true_irf_c, linetype = "True IRF", col = "Transitory"))+
-  geom_line(aes(x=0:(nrow(m2_irf)-1), y=m2_irf[,'Delta.c'], linetype = "Estimated IRF", col = "Transitory"))+
-  geom_line(aes(x=0:(nrow(m2_irf)-1), y=true_irf_y, linetype = "True IRF", col = "Permanent"))+
-  geom_line(aes(x=0:(nrow(m2_irf)-1), y=m2_irf[,'Delta.y'], linetype = "Estimated IRF", col = "Permanent")) +
-  ggtitle("Impulse Response of Consumption to Transitory & Permanent Shocks")+
-  xlab("Time Since Shock")+
-  ylab("Change in Consumption")
+We consider two structural identification schemes: (1) Cholesky decomposition ordering $\Delta y_t$ before $\Delta c_t$, and (2) long-run restriction allowing for a permanent shock that can have a long-run effect on income levels and a transitory shock that has zero long-run effect on income levels. Our Cholesky ordering assumes that shocks to $\Delta y_t$ have an immediate effect on $\Delta y_t$ and $\Delta c_t$, but shocks to $\Delta c_t$ only have an immediate effect on $\Delta c_t$. This is reasonable as it assumes that consumption responds to news about permanent income immediately, but income does not contemporaneously respond to news about consumption. However, a shock to $\Delta y_t$ in the Cholesky decomposition is some mixture of the true permanent and transitory shocks (since $\Delta y_t = \eta_t + \epsilon_t - \epsilon_{t-1}$), so the IRFs from the Cholesky decomposition will not match the true IRFs. The long-run restriction model seeks to separately identify the permanent and transitory shocks by imposing the restriction that the transitory shock has no long-run effect on income levels. We would expect the IRFs from the long-run restriction model to match the true IRFs more closely than those from the Cholesky decomposition.
+
+```{r}
+# STRUCTURAL RESTRICTION 1: Cholesky decomposition with ordering delY, delC
+Sighattr <- t(chol(Sighat))  # lower triangular Cholesky factor of Sighat
+
+# STRUCTURAL RESTRICTION 2: Impose long-run restriction
+SumPhi_t <- matrix(0, nrow = 2, ncol = 2)
+for(i in 1:p){
+  Phi_hat_no_const <- Phihat[-1, ]  
+  SumPhi_t <- SumPhi_t + Phi_hat_no_const[((i-1)*2 + 1):(i*2), ]
+}
+SumPhi <- t(SumPhi_t) 
+I_phi_inv <- solve(diag(2) - SumPhi)
+A <- t(chol(I_phi_inv %*% Sighat %*% t(I_phi_inv)))
+D <- (diag(2) - SumPhi) %*% A
+# Normalize the shocks to be positive for Delta Y (Cholesky is unique up to sign)
+if (D[1, 1] < 0) D[, 1] <- -D[, 1]
+if (D[1, 2] < 0) D[, 2] <- -D[, 2]
 ```
 
-It's actually relatively close to the true IRFs. We also ran this with $p=50$,
-and then the IRFs are indistinguishable. To get even closer we could
-use Cholesky decomposition giving precedent to the $\varepsilon$ shocks since
-they are completely exogenous.
+```{r}
+compute_IRF <- function(Phihat, Hmax, method) {
+  # ************************************************************************ #
+  # Computes impulse response functions (IRFs) for a VAR(p) model using either
+  # Cholesky decomposition or long-run restrictions to identify structural shocks.
+  #
+  # Inputs:
+  #   Phihat: (1+2p) x n matrix of OLS estimates of VAR coefficients
+  #   Hmax: maximum horizon for IRFs
+  #   method: "Cholesky" or "Long Run Restriction" for structural shocks
+  #
+  # Output:
+  #   IRFall: (Hmax+1) x n x n array of IRFs, where IRFall[h+1, j, i] is the response
+  #           of variable j at horizon h to a shock in variable i at time 0.
+  # ************************************************************************ #
+  
+  if (method == "Cholesky") {
+    M <- Sighattr
+  } else if (method == "Long Run Restriction") {
+    M <- D
+  } else {
+    stop("Invalid method. Choose 'Cholesky' or 'Long Run Restriction'.")
+  }
+  
+  n <- 2  # number of variables (delY, delC)
+  IRFall <- array(NA, dim=c((Hmax+1), n, n)) # (horizon, shockto, shockfrom)
+  
+  # choose shock: 1 = delY, 2 = delC
+  for (shind in 1:2){ 
+    IRFmat           <- matrix(0, nrow=(Hmax+1), ncol=n) # (horizon, shockto)
+    
+    # response at impact is shind column of M
+    IRFmat[1,]       <- M[,shind]
+    
+    xxIRF            <- matrix(0, nrow=1, ncol=p*n)  
+    xxIRF[1,1:n]     <- IRFmat[1,]
+    Phi_hat_no_const <- Phihat[-1, ]  
+    
+    for(h in 1:Hmax){
+      # compute response at horizon h
+      IRFmat[(1+h),] <- xxIRF%*%Phi_hat_no_const
+      # update the xxIRF vector
+      if(p > 1){
+        xxIRF[1,(n+1):(n*p)] <- xxIRF[1,1:(n*(p-1))]
+      }
+      xxIRF[1,1:n]     <- IRFmat[(1+h),]
+    }
+    
+    IRFall[,,shind] <- IRFmat
+  }
+  
+  return(IRFall)
+}
+
+plot_IRF <- function(IRFall, Hmax, method) {
+  # ************************************************************************ #
+  # Plots IRFs in a 2x2 grid.
+  #
+  # Inputs:
+  #   IRFall: output of compute_IRF()
+  #   Hmax: maximum horizon for IRFs
+  #   method: "Cholesky" or "Long Run Restriction" for plot title
+  #
+  # Output:
+  #   A plot of the IRFs in a 2x2 grid.
+  # ************************************************************************ #
+  
+  horizons <- 0:Hmax 
+
+  if (method == "Cholesky") {
+    shock1 <- "Delta Y Shock"
+    shock2 <- "Delta C Shock"
+  } else if (method == "Long Run Restriction") {
+    shock1 <- "Permanent Shock"
+    shock2 <- "Transitory Shock"
+  } else {
+    stop("Invalid method. Choose 'Cholesky' or 'Long Run Restriction'.")
+  }
+
+  title11 <- paste("IRF of Delta Y to", shock1)
+  title21 <- paste("IRF of Delta C to", shock1)
+  title12 <- paste("IRF of Delta Y to", shock2)
+  title22 <- paste("IRF of Delta C to", shock2)
+  
+  irf_df <- rbind(
+    data.frame(Horizon = horizons, Response = IRFall[, 1, 1], Title = title11),
+    data.frame(Horizon = horizons, Response = IRFall[, 2, 1], Title = title21),
+    data.frame(Horizon = horizons, Response = IRFall[, 1, 2], Title = title12),
+    data.frame(Horizon = horizons, Response = IRFall[, 2, 2], Title = title22)
+  )
+  
+  # Get the grid order correct
+  irf_df$Title <- factor(irf_df$Title, levels = c(title11, title21, title12, title22))
+  
+  p <- ggplot(irf_df, aes(x = Horizon, y = Response)) +
+    geom_hline(yintercept = 0, color = "black", linetype = "dashed") + # Adds a zero-line
+    geom_line(color = "blue", linewidth = 1) +                         # Draws the IRF
+    facet_wrap(~ Title, ncol = 2, scales = "free_y") +                 # Creates the 2x2 grid
+    theme_bw() +                                        
+    theme(
+      strip.background = element_rect(fill = "grey95"),
+      strip.text = element_text(face = "bold")
+    ) +
+    labs(x = "Horizon", y = "Response") +
+    ggtitle(paste("Impulse Response Functions -", method))
+    
+  return(p)
+}
+```
+
+```{r}
+# Compute IRFs for both methods
+Hmax <- 15
+IRF_Cholesky <- compute_IRF(Phihat, Hmax, method = "Cholesky")
+IRF_LR <- compute_IRF(Phihat, Hmax, method = "Long Run Restriction")
+```
+
+```{r}
+# Plot IRFs for Cholesky decomposition
+plot_IRF(IRF_Cholesky, Hmax, method = "Cholesky")
+```
+
+```{r}
+# Plot IRFs for long-run restriction
+plot_IRF(IRF_LR, Hmax, method = "Long Run Restriction")
+```
+
+The IRFs compute the response of $\Delta y_{t+h}$ and $\Delta c_{t+h}$ to a one-standard-deviation shock. Since $\sigma_\eta^2 = \sigma_\varepsilon^2 = 0.05$, a one-standard-deviation shock is $\sqrt{0.05} \approx 0.224$ units. So we need to multiply our theoretical IRFs by 0.224 to compare them to the estimated IRFs. Recall from our theoretical analysis that the true IRFs should be
+$$
+\frac{\partial\Delta y_{t+h}}{\partial\eta_t} =
+\begin{cases}
+    1 & \text{if } h=0 \\
+    0 & \text{if } h\ge1
+\end{cases}, \quad
+\frac{\partial\Delta y_{t+h}}{\partial\varepsilon_t} =
+\begin{cases}
+    1 & \text{if } h=0 \\
+    -1 & \text{if } h=1 \\
+    0 & \text{if } h\ge2
+\end{cases}, \quad
+\frac{\partial\Delta c_{t+h}}{\partial\eta_t} =
+\begin{cases}
+    1 & \text{if } h=0 \\
+    0 & \text{if } h\ge1
+\end{cases}, \quad
+\frac{\partial\Delta c_{t+h}}{\partial\varepsilon_t} =
+\begin{cases}
+    1-\beta & \text{if } h=0 \\
+    0 & \text{if } h\ge1
+\end{cases}
+$$
+Since $\beta=0.99$ and accounting for the standard deviation scaling, we would expect the IRF to be
+$$
+IRF_{\Delta y, \eta}(h) =
+\begin{cases}
+    0.224 & \text{if } h=0 \\
+    0 & \text{if } h\ge1
+\end{cases}, \quad
+IRF_{\Delta y, \varepsilon}(h) =
+\begin{cases}
+    0.224 & \text{if } h=0 \\
+    -0.224 & \text{if } h=1 \\
+    0 & \text{if } h\ge2
+\end{cases}, \quad
+IRF_{\Delta c, \eta}(h) =
+\begin{cases}
+    0.224 & \text{if } h=0 \\
+    0 & \text{if } h\ge1
+\end{cases}, \quad
+IRF_{\Delta c, \varepsilon}(h) =
+\begin{cases}
+    0.00224 & \text{if } h=0 \\
+    0 & \text{if } h\ge1
+\end{cases}
+$$
+It is hard to compare the Cholesky IRFs to the true IRFs because the Cholesky shocks are a mixture of the permanent and transitory shocks. However, the long-run restriction IRFs match very well. The one quirk is that the IRF of $\Delta c$ to the transitory shock is negative rather than positive. This could be due to $\beta$ being close to 1, which makes the transitory shock have a very small effect on consumption, so estimation error could lead to the wrong sign.
+
+```{r}
+# using packages -- gets us the same IRFs as the manual code
+
+# p <- 5
+# var_model <- VAR(data_nolags, p = p, type = "const")
+# irf_cholesky <- irf(var_model, n.ahead = 10, ortho = TRUE, runs = 1000)
+# var_bq <- BQ(var_model)
+# irf_longrun <- irf(var_bq, n.ahead = 10,runs = 1000)
+
+# plot(irf_cholesky)
+# plot(irf_longrun)
+```
 
 # The Kalman Filter
 
