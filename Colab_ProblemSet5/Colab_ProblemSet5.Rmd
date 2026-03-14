@@ -541,6 +541,12 @@ s.t. \\
 \end{gathered}
 $$
 
+By generalizing the formulas for the univariate $MA(1)$, it follows that the variance and autocovariances are respectively
+$$
+\mathbf{\Gamma}_0 = \mathbf{\Sigma}_e + \tilde{\mathbf{\Psi}}_1 \mathbf{\Sigma}_e \tilde{\mathbf{\Psi}}_1', \quad 
+\mathbf{\Gamma}_1 = \tilde{\mathbf{\Psi}}_1 \mathbf{\Sigma}_e, \quad
+\mathbf{\Gamma}_j = \mathbf{0} \text{ for } j \geq 2
+$$
 
 
 ## 3. Simulation Exercise
